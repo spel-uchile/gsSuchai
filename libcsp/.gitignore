@@ -1,0 +1,17 @@
+build
+*.swp
+.lock*
+.waf*
+.waf3*
+waf-*/
+*.o
+*.pyc
+.project
+.cproject
+~*
+pdebug*
+*.tar*
+tags
+.DS_store
+*.pdf
+*.html
