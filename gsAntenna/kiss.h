@@ -1,0 +1,6 @@
+
+
+
+char * mgetline(void);
+
+
