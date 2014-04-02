@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/img">
+        <file>logo_suchai.png</file>
+        <file>icon.png</file>
+    </qresource>
+</RCC>

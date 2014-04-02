@@ -1,0 +1,1 @@
+GsRemote========It's based in SerialCommander to send telecomands and receive telemetry via ZMQto a remote node connected to TNC.Visit https://github.com/carlgonz/SerialCommander for details
