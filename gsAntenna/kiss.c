@@ -100,7 +100,7 @@ CSP_DEFINE_TASK(task_server) {
                     bf[i]='\0';
 
                     // Send message to all "TM:" subscribers
-                    sprintf (update, "TM: %s", bf);
+                    sprintf (update, "TM: %s\n", bf);
                     s_send (publisher, update);
 
                     // libcsp tasks
