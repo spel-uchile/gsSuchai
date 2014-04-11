@@ -161,6 +161,12 @@ class SerialCommander(QtGui.QMainWindow):
         else:
             #Normal mode, just write text in terminal
             self.window.textEditTerminal.insertPlainText(text)
+
+    def write_telemtry(self, tex):
+        """
+        Add new telemetry to list
+        """
+        self.window.listWidgetTelemetry.addItem(tex)
                     
     def command_clicked(self,item):
         """
@@ -214,6 +220,12 @@ class SerialCommander(QtGui.QMainWindow):
         self.client.send(msg)
         self.window.lineEditSend.clear()
         self.history_cnt = 0
+
+    def send_telecomand(self):
+        """
+        Send new telecomand to server
+        """
+        pass
         
     def save_log(self):
         """
