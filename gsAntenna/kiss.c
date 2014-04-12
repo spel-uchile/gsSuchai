@@ -67,59 +67,56 @@ CSP_DEFINE_TASK(task_server)
     csp_listen(socket, 5);
 
     printf("Server task started\r\n");
-    int i;
-    int obufflen;
 
     //ZMQ init
     void *context = zmq_ctx_new();
     void *publisher = zmq_socket(context, ZMQ_PUB);
     int rc = zmq_bind(publisher, "tcp://*:5556");
-    assert (rc == 0);
+    assert(rc == 0);
     
-    char update [200];
-    char bf[200];
+    int i;
+    char buffer[1024];
+    memset(buffer, '\0', 1024);
 
     // listen incomming packets
     while(running) {
-        if( (conn = csp_accept(socket, 10000)) == NULL ) {
+        if( (conn = csp_accept(socket, 10000)) == NULL ) 
+        {
             continue;
         }
         
-        while( (packet = csp_read(conn, 100)) != NULL ) {
-            switch( csp_conn_dport(conn) ) {
+        while( (packet = csp_read(conn, 100)) != NULL ) 
+        {
+            switch( csp_conn_dport(conn) )
+            {
                 
                 case PORT:
                     printf("task_server: Received CSP packet in address %d (len = %d)\n", D_ADDRESS, packet->length);
-
-                    obufflen = packet->length;
-                    if(PACKET_ASCII==1){				
-                        for(i=0;i<obufflen;i++){
-                            printf("%c", packet->data[i] );
-                        }
-                        printf("\n");
+                    
+                    char tmp[5];
+                    for(i=0; i<packet->length; i++)
+                    {
+                        sprintf(tmp, "0x%04X,", packet->data[i]);
+                        strcat(buffer, tmp);
                     }
-                    else{
-                        for(i=0;i<obufflen;i++){
-                            printf("0x%X", packet->data[i] );
-                        }
-                        printf("\n");
-                    }
+                    
+                    json_t *j_msg = json_pack("{s:s, s:s}",
+                                            "type", "tc",
+                                            "data", buffer):
+                    
+                    char *s_msg = json_dumps(j_msg);
                 
-                    //send to gsRemote
-                    printf("task_server: Resending as ZMQ packet\n");
-
-                    for(i=0;i<(packet->length);i++){
-                        bf[i] = packet->data[i];
-                    }
-                    bf[i]='\0';
-
                     // Send message to all "TM:" subscribers
-                    sprintf (update, "TM: %s\n", bf);
-                    s_send (publisher, update);
+                    printf("task_server: Resending as ZMQ packet\n");
+                    s_send (publisher, s_msg);
 
                     // libcsp tasks
                     csp_buffer_free(packet);
                     csp_send(conn, response, 1000);
+                    
+                    free(j_msg);
+                    free(s_msg);
+                    
                     break;
 
                 default:
@@ -163,7 +160,6 @@ CSP_DEFINE_TASK(task_client)
     //Process tasks forever
     while(1)
     {
-
         message = s_recv(receiver);   
         if(!message) continue;
         
