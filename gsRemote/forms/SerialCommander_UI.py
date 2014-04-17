@@ -2,8 +2,7 @@
 
 # Form implementation generated from reading ui file 'Console.ui'
 #
-# Created: Wed Apr 16 21:15:25 2014
-#      by: PyQt4 UI code generator 4.9.1
+# Created by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +11,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -116,14 +124,14 @@ class Ui_MainWindow(object):
         self.checkBoxCR.setObjectName(_fromUtf8("checkBoxCR"))
         self.gridLayout_4.addWidget(self.checkBoxCR, 1, 6, 1, 1)
         self.pushButton = QtGui.QPushButton(self.tab)
-        icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton.setIcon(icon1)
+        icon = QtGui.QIcon.fromTheme(_fromUtf8("edit-clear"))
+        self.pushButton.setIcon(icon)
         self.pushButton.setObjectName(_fromUtf8("pushButton"))
         self.gridLayout_4.addWidget(self.pushButton, 3, 7, 1, 1)
         self.pushButtonSend = QtGui.QPushButton(self.tab)
         self.pushButtonSend.setEnabled(False)
-        self.pushButtonSend.setIcon(icon1)
+        icon = QtGui.QIcon.fromTheme(_fromUtf8("go-next"))
+        self.pushButtonSend.setIcon(icon)
         self.pushButtonSend.setAutoDefault(True)
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
         self.gridLayout_4.addWidget(self.pushButtonSend, 1, 7, 1, 1)
@@ -223,16 +231,20 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
         self.actionGuardar = QtGui.QAction(MainWindow)
-        self.actionGuardar.setIcon(icon1)
+        icon = QtGui.QIcon.fromTheme(_fromUtf8("document-save"))
+        self.actionGuardar.setIcon(icon)
         self.actionGuardar.setObjectName(_fromUtf8("actionGuardar"))
         self.actionSalir = QtGui.QAction(MainWindow)
-        self.actionSalir.setIcon(icon1)
+        icon = QtGui.QIcon.fromTheme(_fromUtf8("application-exit"))
+        self.actionSalir.setIcon(icon)
         self.actionSalir.setObjectName(_fromUtf8("actionSalir"))
         self.actionAgregar_comando = QtGui.QAction(MainWindow)
-        self.actionAgregar_comando.setIcon(icon1)
+        icon = QtGui.QIcon.fromTheme(_fromUtf8("list-add"))
+        self.actionAgregar_comando.setIcon(icon)
         self.actionAgregar_comando.setObjectName(_fromUtf8("actionAgregar_comando"))
         self.actionAcerca_de = QtGui.QAction(MainWindow)
-        self.actionAcerca_de.setIcon(icon1)
+        icon = QtGui.QIcon.fromTheme(_fromUtf8("help-about"))
+        self.actionAcerca_de.setIcon(icon)
         self.actionAcerca_de.setObjectName(_fromUtf8("actionAcerca_de"))
         self.menuArchivo.addAction(self.actionGuardar)
         self.menuArchivo.addSeparator()
@@ -246,7 +258,7 @@ class Ui_MainWindow(object):
         self.labePortRecv.setBuddy(self.comboBoxPortRecv)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QObject.connect(self.actionSalir, QtCore.SIGNAL(_fromUtf8("triggered()")), MainWindow.close)
         QtCore.QObject.connect(self.pushButton, QtCore.SIGNAL(_fromUtf8("clicked()")), self.textEditTerminal.clear)
         QtCore.QObject.connect(self.lineEditSend, QtCore.SIGNAL(_fromUtf8("returnPressed()")), self.pushButtonSend.click)
@@ -274,42 +286,42 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.listWidgetTelemetry, self.textEditTelemetry)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "SUCHAI Remote Ground Station", None, QtGui.QApplication.UnicodeUTF8))
-        self.textEditTerminal.setDocumentTitle(QtGui.QApplication.translate("MainWindow", "Log", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBoxCommand.setTitle(QtGui.QApplication.translate("MainWindow", "Lista de comandos", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelPeriod.setText(QtGui.QApplication.translate("MainWindow", "LOGO", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupConexion.setTitle(QtGui.QApplication.translate("MainWindow", "Conexión", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelPortSend.setText(QtGui.QApplication.translate("MainWindow", "Puerto escritura", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonOpenPort.setText(QtGui.QApplication.translate("MainWindow", "Abrir", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonClosePort.setText(QtGui.QApplication.translate("MainWindow", "Cerrar", None, QtGui.QApplication.UnicodeUTF8))
-        self.labePortRecv.setText(QtGui.QApplication.translate("MainWindow", "Puerto lectura", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelURL.setText(QtGui.QApplication.translate("MainWindow", "URL Servidor", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxCR.setText(QtGui.QApplication.translate("MainWindow", "CR", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton.setText(QtGui.QApplication.translate("MainWindow", "Limpiar", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonSend.setText(QtGui.QApplication.translate("MainWindow", "Enviar", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxLF.setText(QtGui.QApplication.translate("MainWindow", "LF", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QtGui.QApplication.translate("MainWindow", "Consola", None, QtGui.QApplication.UnicodeUTF8))
-        self.lineEdit_tcfilter.setPlaceholderText(QtGui.QApplication.translate("MainWindow", "Filtrar", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(_translate("MainWindow", "SUCHAI Remote Ground Station", None))
+        self.textEditTerminal.setDocumentTitle(_translate("MainWindow", "Log", None))
+        self.groupBoxCommand.setTitle(_translate("MainWindow", "Lista de comandos", None))
+        self.labelPeriod.setText(_translate("MainWindow", "LOGO", None))
+        self.groupConexion.setTitle(_translate("MainWindow", "Conexión", None))
+        self.labelPortSend.setText(_translate("MainWindow", "Puerto escritura", None))
+        self.pushButtonOpenPort.setText(_translate("MainWindow", "Abrir", None))
+        self.pushButtonClosePort.setText(_translate("MainWindow", "Cerrar", None))
+        self.labePortRecv.setText(_translate("MainWindow", "Puerto lectura", None))
+        self.labelURL.setText(_translate("MainWindow", "URL Servidor", None))
+        self.checkBoxCR.setText(_translate("MainWindow", "CR", None))
+        self.pushButton.setText(_translate("MainWindow", "Limpiar", None))
+        self.pushButtonSend.setText(_translate("MainWindow", "Enviar", None))
+        self.checkBoxLF.setText(_translate("MainWindow", "LF", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Consola", None))
+        self.lineEdit_tcfilter.setPlaceholderText(_translate("MainWindow", "Filtrar", None))
         item = self.tableWidget_tcframe.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Nombre", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Nombre", None))
         item = self.tableWidget_tcframe.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Comando", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Comando", None))
         item = self.tableWidget_tcframe.horizontalHeaderItem(2)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Parámetro", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_tcclear.setText(QtGui.QApplication.translate("MainWindow", "Clear", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_tcsave.setText(QtGui.QApplication.translate("MainWindow", "Save", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_tcsend.setText(QtGui.QApplication.translate("MainWindow", "Send", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_tchistory.setText(QtGui.QApplication.translate("MainWindow", "Historial", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QtGui.QApplication.translate("MainWindow", "Telecomandos", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), QtGui.QApplication.translate("MainWindow", "Telemetría", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuArchivo.setTitle(QtGui.QApplication.translate("MainWindow", "Archivo", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuHerramientas.setTitle(QtGui.QApplication.translate("MainWindow", "Herramientas", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuAyuda.setTitle(QtGui.QApplication.translate("MainWindow", "Ayuda", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionGuardar.setText(QtGui.QApplication.translate("MainWindow", "Guardar", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionGuardar.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+S", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionSalir.setText(QtGui.QApplication.translate("MainWindow", "Salir", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionSalir.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionAgregar_comando.setText(QtGui.QApplication.translate("MainWindow", "Agregar comando", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionAgregar_comando.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+Shift+A", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionAcerca_de.setText(QtGui.QApplication.translate("MainWindow", "Acerca de", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Parámetro", None))
+        self.pushButton_tcclear.setText(_translate("MainWindow", "Clear", None))
+        self.pushButton_tcsave.setText(_translate("MainWindow", "Save", None))
+        self.pushButton_tcsend.setText(_translate("MainWindow", "Send", None))
+        self.label_tchistory.setText(_translate("MainWindow", "Historial", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Telecomandos", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "Telemetría", None))
+        self.menuArchivo.setTitle(_translate("MainWindow", "Archivo", None))
+        self.menuHerramientas.setTitle(_translate("MainWindow", "Herramientas", None))
+        self.menuAyuda.setTitle(_translate("MainWindow", "Ayuda", None))
+        self.actionGuardar.setText(_translate("MainWindow", "Guardar", None))
+        self.actionGuardar.setShortcut(_translate("MainWindow", "Ctrl+S", None))
+        self.actionSalir.setText(_translate("MainWindow", "Salir", None))
+        self.actionSalir.setShortcut(_translate("MainWindow", "Ctrl+Q", None))
+        self.actionAgregar_comando.setText(_translate("MainWindow", "Agregar comando", None))
+        self.actionAgregar_comando.setShortcut(_translate("MainWindow", "Ctrl+Shift+A", None))
+        self.actionAcerca_de.setText(_translate("MainWindow", "Acerca de", None))
 
