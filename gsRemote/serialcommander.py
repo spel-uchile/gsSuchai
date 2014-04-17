@@ -204,11 +204,14 @@ class SerialCommander(QtGui.QMainWindow):
     
     def write_terminal(self, text):
         """
-        Escribe el texto en el widget de lectura, configura el
-        cursor hasta el final de cocumento y agrega marca de tiempo
+        Log received msg to terminal
         """
-        
-        text = text.replace('\r', '')
+
+        #Separate msg fields. If fail, just copy the text
+        msg = json.loads(text)
+        type = msg.get("type", "other")
+        data = msg.get("data", text)
+        log = "[{0}] {1}\n".format(type, data)
         
         #Moves cursor to end
         c = self.window.textEditTerminal.textCursor()
@@ -216,28 +219,26 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.textEditTerminal.setTextCursor(c)
         
         if self.timestamp:
-            #Modo Timestamp, busca nueva linea para agregar timestamp
-            if self.put_timestamp:
-                #Agregar la marca de tiempo si corresponde
-                ts = datetime.datetime.now().isoformat(' ')
-                ts = '\n[{0}] '.format(ts)
-                self.window.textEditTerminal.insertPlainText(ts)
-                self.put_timestamp = False
-            
-            #Buscar si hay nueva linea para agregar marca despues
-            lines = text.split('\n',1)
-            text = lines[0]
-            self.window.textEditTerminal.insertPlainText(text)
-            
-            #Seguir procesando el resto de la linea
-            if len(lines) > 1:
-                self.put_timestamp = True
-                if lines[1] != '':
-                    self.write_terminal(lines[1])
-                    
-        else:
-            #Normal mode, just write text in terminal
-            self.window.textEditTerminal.insertPlainText(text)
+            #Add timestamp
+            ts = datetime.datetime.now().isoformat(' ')
+            log = '[{0}]{1}'.format(ts, log)
+
+        #Normal mode, just write text in terminal
+        self.window.textEditTerminal.insertPlainText(log)
+
+        #Process special msgs
+        if type is "tm":
+            self._process_tm(data)
+
+    def _process_tm(self, data):
+        ts = datetime.datetime.now().isoformat(' ')
+        t_frame = data[0]
+        n_frame = data[1]
+        t_data = data[2]
+        __data = data[3:]
+
+        line = "({4})[{0}][{1}]-[{2}}] {3}".format(t_frame, n_frame, t_data, __data, ts)
+        self.window.listWidgetTelemetry.addItem(line)
 
     def write_telemtry(self, tex):
         """
@@ -297,12 +298,6 @@ class SerialCommander(QtGui.QMainWindow):
         self.client.send(msg)
         self.window.lineEditSend.clear()
         self.history_cnt = 0
-
-    def send_telecomand(self):
-        """
-        Send new telecomand to server
-        """
-        pass
         
     def save_log(self):
         """
