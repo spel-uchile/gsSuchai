@@ -62,14 +62,33 @@ class SerialCommander(QtGui.QMainWindow):
         except IOError:
             self.config = {}
 
+        #Load telecommands list
+        try:
+            tc_list = []
+            tc_file = open("config/cmd_list.txt", 'r')
+
+            for line in tc_file:
+                line = line.replace(',', ', ')
+                line = line.replace('\n', '')
+                tc_list.append(line)
+
+            tc_file.close()
+            tc_list.sort()
+            self.config["tc_list"] = tc_list
+
+        except IOError as e:
+            print(e)
+            self.config["tc_list"] = []
+
         self.commands_list = self.config.get("commands", [])
-                
+
         #Set GUI
         self.window = Ui_MainWindow()
         self.window.setupUi(self)
         self.setup_comm()
         self.setup_send()
         self.setup_actions()
+        self.setup_telecommands()
         
     def setup_comm(self):
         """
@@ -99,13 +118,7 @@ class SerialCommander(QtGui.QMainWindow):
         #Conexiones
         self.window.listWidgetCommand.itemDoubleClicked.connect(self.command_clicked)
         self.window.pushButtonSend.clicked.connect(self.send_msg)
-        self.window.checkBoxTimestamp.toggled.connect(self.timestamp_toggle)
-    
-    def timestamp_toggle(self, value):
-        """
-        Slot que intercambia entre agregar o no la marca de tiempo
-        """
-        self.timestamp = value
+        # self.window.checkBoxTimestamp.toggled.connect(self.timestamp_toggle)
     
     def setup_actions(self):
         """
@@ -114,6 +127,70 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.actionGuardar.triggered.connect(self.save_log)
         self.window.actionAgregar_comando.triggered.connect(self.add_cmd)
         # self.client.new_message.connect(self.write_terminal)
+
+    def setup_telecommands(self):
+        """
+        Configures telecommands tab
+        """
+
+        #Fill telecommand list
+        cmd_list = self.config.get("tc_list")
+        if cmd_list:
+            self.window.listWidget_cmd.addItems(cmd_list)
+
+        #Connections
+        self.window.lineEdit_tcfilter.textChanged.connect(self.tc_filter)
+        self.window.listWidget_cmd.itemDoubleClicked.connect(self.tc_addtoframe)
+        self.window.pushButton_tcclear.clicked.connect(self.tc_clearframe)
+        self.window.pushButton_tcsend.clicked.connect(self.tc_sned)
+
+    def tc_filter(self, text):
+        """
+        Filters telecommand list by text
+        """
+        if len(text):
+            f_list = [s for s in self.config.get("tc_list") if str(text) in s]
+            self.window.listWidget_cmd.clear()
+            self.window.listWidget_cmd.addItems(f_list)
+        else:
+            self.window.listWidget_cmd.clear()
+            self.window.listWidget_cmd.addItems(self.config.get("tc_list"))
+
+    def tc_addtoframe(self, item):
+        """
+        Add new tc in item to current frame
+        """
+        tc_text = str(item.text())
+        [cmd, name] = tc_text.split(',')
+        item_cmd = QTableWidgetItem(cmd)
+        item_name = QTableWidgetItem(name)
+        item_par = QTableWidgetItem('0')
+
+        rows = self.window.tableWidget_tcframe.rowCount()
+        self.window.tableWidget_tcframe.setRowCount(rows+1)
+        self.window.tableWidget_tcframe.setItem(rows, 0, item_name)
+        self.window.tableWidget_tcframe.setItem(rows, 1, item_cmd)
+        self.window.tableWidget_tcframe.setItem(rows, 2, item_par)
+
+    def tc_clearframe(self, item):
+        """
+        Clears current tc frame
+        """
+        self.window.tableWidget_tcframe.clearContents()
+        self.window.tableWidget_tcframe.setRowCount(0)
+
+    def tc_send(self):
+        """
+        Send current tc frame
+        """
+        pass
+    
+    def timestamp_toggle(self, value):
+        """
+        Slot que intercambia entre agregar o no la marca de tiempo
+        @deprecated
+        """
+        self.timestamp = value
         
     def add_cmd(self):
         """

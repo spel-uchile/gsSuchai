@@ -258,7 +258,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_5">
         <item row="0" column="0">
-         <widget class="QLineEdit" name="lineEdit">
+         <widget class="QLineEdit" name="lineEdit_tcfilter">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -280,7 +280,7 @@
          </widget>
         </item>
         <item row="1" column="1" colspan="3">
-         <widget class="QTableWidget" name="tableWidget">
+         <widget class="QTableWidget" name="tableWidget_tcframe">
           <property name="dragEnabled">
            <bool>true</bool>
           </property>
@@ -326,21 +326,21 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="pushButton_tcclear">
           <property name="text">
            <string>Clear</string>
           </property>
          </widget>
         </item>
         <item row="2" column="2">
-         <widget class="QPushButton" name="pushButton_4">
+         <widget class="QPushButton" name="pushButton_tcsave">
           <property name="text">
            <string>Save</string>
           </property>
          </widget>
         </item>
         <item row="2" column="3">
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="pushButton_tcsend">
           <property name="text">
            <string>Send</string>
           </property>
@@ -357,14 +357,14 @@
          </widget>
         </item>
         <item row="0" column="2" colspan="2">
-         <widget class="QComboBox" name="comboBox">
+         <widget class="QComboBox" name="comboBox_tchistory">
           <property name="editable">
            <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="label_tchistory">
           <property name="text">
            <string>Historial</string>
           </property>
@@ -477,10 +477,28 @@
   </action>
  </widget>
  <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>lineEditURL</tabstop>
   <tabstop>comboBoxPortRecv</tabstop>
   <tabstop>comboBoxPortSend</tabstop>
-  <tabstop>pushButtonOpenPort</tabstop>
   <tabstop>pushButtonClosePort</tabstop>
+  <tabstop>pushButtonOpenPort</tabstop>
+  <tabstop>listWidgetCommand</tabstop>
+  <tabstop>lineEditSend</tabstop>
+  <tabstop>pushButtonSend</tabstop>
+  <tabstop>checkBoxLF</tabstop>
+  <tabstop>checkBoxCR</tabstop>
+  <tabstop>textEditTerminal</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>lineEdit_tcfilter</tabstop>
+  <tabstop>listWidget_cmd</tabstop>
+  <tabstop>comboBox_tchistory</tabstop>
+  <tabstop>tableWidget_tcframe</tabstop>
+  <tabstop>pushButton_tcclear</tabstop>
+  <tabstop>pushButton_tcsave</tabstop>
+  <tabstop>pushButton_tcsend</tabstop>
+  <tabstop>listWidgetTelemetry</tabstop>
+  <tabstop>textEditTelemetry</tabstop>
  </tabstops>
  <resources/>
  <connections>
