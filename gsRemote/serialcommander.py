@@ -142,7 +142,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.lineEdit_tcfilter.textChanged.connect(self.tc_filter)
         self.window.listWidget_cmd.itemDoubleClicked.connect(self.tc_addtoframe)
         self.window.pushButton_tcclear.clicked.connect(self.tc_clearframe)
-        self.window.pushButton_tcsend.clicked.connect(self.tc_sned)
+        self.window.pushButton_tcsend.clicked.connect(self.tc_send)
 
     def tc_filter(self, text):
         """
@@ -208,7 +208,7 @@ class SerialCommander(QtGui.QMainWindow):
         """
 
         #Separate msg fields. If fail, just copy the text
-        msg = json.loads(text)
+        msg = json.loads(str(text))
         type = msg.get("type", "other")
         data = msg.get("data", text)
         log = "[{0}] {1}\n".format(type, data)
