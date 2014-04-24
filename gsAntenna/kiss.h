@@ -174,6 +174,8 @@ int com_get_calibration(uint8_t node, nanocom_calibrate_t * com_calibrate, uint3
  */
 void com_print_conf(nanocom_conf_t * config);
 
+void com_print_status(nanocom_data_t * com_stat);
+
 #endif /* NANOCOM_H_ */
 
 

@@ -230,6 +230,78 @@ CSP_DEFINE_TASK(task_client)
         {
             data = json_object_get(root, "data");
             
+            char *key;
+            json_t *value;
+            uint16_t ivalue;
+            
+            json_object_foreach(data, key, value) 
+            {              
+                //Set tx baud
+                if(strcmp(key, "set_tx_baud") == 0)
+                {
+                    ivalue = (uint8_t)json_integer_value(value);
+                    tnc_config.tx_baud = ivalue;
+                    com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                }
+                //Set rx baud
+                else if(strcmp(key, "set_rx_baud") == 0)
+                {
+                    ivalue = (uint8_t)json_integer_value(value);
+                    tnc_config.rx_baud = ivalue;
+                    com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                }
+                //Set do rs
+                else if(strcmp(key, "set_do_rs") == 0)
+                {
+                    ivalue = (uint8_t)json_integer_value(value);
+                    tnc_config.do_rs = ivalue;
+                    com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                }
+                //Set do random
+                else if(strcmp(key, "set_do_random") == 0)
+                {
+                    ivalue = (uint8_t)json_integer_value(value);
+                    tnc_config.do_random = ivalue;
+                    com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                }
+                //Set do viterbi
+                else if(strcmp(key, "set_do_viterbi") == 0)
+                {
+                    ivalue = (uint8_t)json_integer_value(value);
+                    tnc_config.do_viterbi = ivalue;
+                    com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                }
+                //Set preamble_length
+                else if(strcmp(key, "set_preamble") == 0)
+                {
+                    ivalue = (uint16_t)json_integer_value(value);
+                    tnc_config.preamble_length = ivalue;
+                    com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                }
+                //Get config
+                else if(strcmp(key, "get_config") == 0)
+                {
+                    com_get_conf(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_conf(&tnc_config);
+                }
+                //Get status
+                else if(strcmp(key, "get_status") == 0)
+                {
+                    com_get_status(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_status(&tnc_config);
+                }
+                //PING
+                else if(strcmp(key, "ping") == 0)
+                {
+                    ivalue = (uint8_t)json_integer_value(value);
+                    int result = csp_ping(ivalue, 5*csp_timeout, 10, CSP_O_NONE);
+                    printf("Ping to %d of size %d took %d ms.\n", ivalue, 10, result);
+                }
+                else
+                {
+                    printf("Invalid tnc command\n");
+                }
+            }
         }
         //Not implemented message type
         else
@@ -420,4 +492,19 @@ void com_print_conf(nanocom_conf_t * com_conf) {
     printf("MORSE: enable: %u, mode: %u,  delay %u, pospone %u, wpm %u, batt level %u, text %s\r\n", com_conf->morse_enable, com_conf->morse_mode, com_conf->morse_inter_delay, com_conf->morse_pospone, com_conf->morse_wpm, com_conf->morse_bat_level, com_conf->morse_text);
     printf("MORSE: cycle: %u, volt:%u rxc:%u txc:%u tempa:%u tempb:%u rssi:%u rferr:%u\r\n", com_conf->morse_cycle, com_conf->morse_en_voltage, com_conf->morse_en_rx_count, com_conf->morse_en_tx_count, com_conf->morse_en_temp_a, com_conf->morse_en_temp_b, com_conf->morse_en_rssi, com_conf->morse_en_rf_err);
     printf("HK: interval %u\r\n", com_conf->hk_interval);
+}
+
+void com_print_status(nanocom_data_t * com_stat) {
+        printf("Bits corrected total: %lu\r\n", com_stat->bit_corr_tot);
+        printf("Bytes corrected total:  %lu\r\n", com_stat->byte_corr_tot);
+        printf("RX packets:  %lu\r\n", com_stat->rx);
+        printf("RX checksum errors:  %lu\r\n", com_stat->rx_err);
+        printf("TX packets:  %lu\r\n", com_stat->tx);
+        printf("Freq. Error:  %d\r\n", com_stat->last_rferr);
+        printf("Last RSSI:  %d\r\n", com_stat->last_rssi);
+        printf("Last A temp:  %d\r\n", com_stat->last_temp_a);
+        printf("Last B temp:  %d\r\n", com_stat->last_temp_b);
+        printf("Last TX current:  %d\r\n", com_stat->last_txcurrent);
+        printf("Last Battery Voltage:  %d\r\n", com_stat->last_batt_volt);
+        printf("Bootcount:  %lu\r\n", com_stat->bootcount);
 }
