@@ -183,8 +183,28 @@ class SerialCommander(QtGui.QMainWindow):
         """
         Send current tc frame
         """
-        pass
-    
+        tc_frame = []
+        cmd_stop = 0xfffe
+        rows = self.window.tableWidget_tcframe.rowCount()
+
+        for i in range(rows):
+            item = self.window.tableWidget_tcframe.item(i, 1)
+            tc = int(str(item.text()), 16)
+            tc_frame.append(tc)
+
+            item = self.window.tableWidget_tcframe.item(i, 2)
+            value = int(str(item.text()), 10)
+            tc_frame.append(value)
+
+        tc_frame.append(cmd_stop)
+        tc_frame.append(cmd_stop)
+
+        tc_json = {"type": "tc",
+                   "data": tc_frame}
+
+        tc_msj = json.dumps(tc_json)
+        self.client.send(tc_msj)
+
     def timestamp_toggle(self, value):
         """
         Slot que intercambia entre agregar o no la marca de tiempo
@@ -247,7 +267,7 @@ class SerialCommander(QtGui.QMainWindow):
         """
         self.window.listWidgetTelemetry.addItem(tex)
                     
-    def command_clicked(self,item):
+    def command_clicked(self, item):
         """
         Mueve un comando de la lista, a la salida de texto
         """
