@@ -64,15 +64,17 @@ class SerialCommander(QtGui.QMainWindow):
 
         #Load telecommands list
         try:
-            tc_list = []
+            tc_set = set()  # Avoid duplicated items
             tc_file = open("config/cmd_list.txt", 'r')
 
             for line in tc_file:
                 line = line.replace(',', ', ')
                 line = line.replace('\n', '')
-                tc_list.append(line)
+                tc_set.add(line)
 
             tc_file.close()
+            
+            tc_list = list(tc_set)
             tc_list.sort()
             self.config["tc_list"] = tc_list
 
