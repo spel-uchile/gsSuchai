@@ -1,0 +1,52 @@
+#!/bin/bash
+PUERTO_SERIAL="/dev/icom"
+MODELO="344"
+BAUDRATE="19200"
+
+
+
+case "$1" in
+
+start)
+    echo -n "Iniciando demonio de control de la radio                  "
+    rigctld -r $PUERTO_SERIAL -m $MODELO -P RTS -s $BAUDRATE &
+    if [ $? -eq 0 ]; then
+        echo  -e "\e[01;34mLISTO\e[00m"
+    else
+        echo  -e "\e[01;31mERROR\e[00m"
+        exit 1
+    fi
+;;
+stop)
+
+    echo -n "Deteniendo demonio de control de la radio                 "
+    killall -9 rigctld 2>/dev/null >/dev/null
+        if [ $? -eq 0 ]; then
+                echo  -e "\e[01;34mLISTO\e[00m"
+        else
+                echo -e "\e[01;31mERROR\e[00m"
+        exit 1
+        fi
+;;
+status)
+    if [ -n "$(ps -A|grep rigctld| cut -d ' ' -f 2)" ]; then
+        echo -e "\e[01;34mControl de radio corriendo =)\e[00m"
+    else
+        echo -e "\e[01;31mControl de radio abajo\e[00m"
+
+    fi
+;;
+restart)
+    echo -n "Reiniciando demonio de control de la radio                "
+    killall -9 rigctld 2>/dev/null >/dev/null  && rigctld -r $PUERTO_SERIAL -m $MODELO -P RTS -s $BAUDRATE & 2>/dev/null >/dev/null
+        if [ $? -eq 0 ]; then
+                echo  -e "\e[01;34mLISTO\e[00m"
+        else
+                echo -e "\e[01;31mERROR\e[00m"
+        exit 1
+        fi
+;;
+*)
+    echo "Uso: controlrotor {start|stop|restart}"
+    exit 1
+esac
