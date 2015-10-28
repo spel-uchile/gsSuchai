@@ -23,6 +23,7 @@
 import sys
 import datetime
 import json
+import re
 
 from PyQt4.Qt import *
 from PyQt4 import QtGui
@@ -32,6 +33,7 @@ from forms.SerialCommander_UI import Ui_MainWindow
 from forms.EditCommandDialog_UI import Ui_DialogEditCommandList
 
 from client import Client
+from telemetry import Telemetry
 
 
 class SerialCommander(QtGui.QMainWindow):
@@ -91,6 +93,9 @@ class SerialCommander(QtGui.QMainWindow):
         self.setup_send()
         self.setup_actions()
         self.setup_telecommands()
+        
+        #Set Telemetries to be stored
+        self.telemetries = []
         
     def setup_comm(self):
         """
@@ -250,7 +255,7 @@ class SerialCommander(QtGui.QMainWindow):
 
         #Process special msgs
         if typ == "tm":
-            self._process_tm(data)
+            self._process_tm(data)    
 
     def _process_tm(self, data):
         ts = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
@@ -261,13 +266,60 @@ class SerialCommander(QtGui.QMainWindow):
         __data = data[3:]
 
         line = "({4})[{0}][{1}]-[{2}] {3}".format(t_frame, n_frame, t_data, __data, ts)
-        self.window.listWidgetTelemetry.addItem(line)
+        #self.window.listWidgetTelemetry.addItem(line)
+        
+        
+        if t_frame == "0x0100": #it is a new frame o 0x400
+            
+            ## First check if the last telemetry is alright
+            if len(self.telemetries) != 0:
+                #check if the last telemetry is finished
+                if self.telemetries[-1].get_state() != 2:
+                     self.telemetries[-1].set_state(3) #broken
+                     
+            ## Append a new telemetry
+            tel = Telemetry()
+            tel.set_data(__data)
+            tel.set_type(t_data)
+            tel.set_state(1)
+            self.telemetries.append(tel)
+            
+        elif t_frame == "0x0200": #it is an ending frame
+            if len(self.telemetries) != 0: #it this is not true something is wrong
+                if self.telemetries[-1].get_state() == 1:
+                    self.telemetries[-1].set_state(2) #finished
+                else:
+                    self.telemetries[-1].set_state(3) #broken
+                    
+                self.telemetries[-1].set_data(__data)
+                
+        elif t_frame == "0x0300": #it is an ongoing frame
+            if len(self.telemetries) != 0: #it this is not true something is wrong
+                if self.telemetries[-1].get_state() != 1:
+                    self.telemetries[-1].set_state(3) #broken
+                    
+                self.telemetries[-1].set_data(__data)
+        
+        self.updateTelemetryTable()
+        
+    def updateTelemetryTable(self):
+        
+        for i in range(0, len(self.telemetries)):
+            self.window.tableWidgetTelemetry.removeRow(i)
+            self.window.tableWidgetTelemetry.insertRow(i)
+            tel = self.telemetries[i]
+            self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(tel.get_state())))
+            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(str(tel.get_type())))
+            self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(','.join(tel.get_data())))
+            self.window.tableWidgetTelemetry.show()
 
-    def write_telemtry(self, tex):
-        """
-        Add new telemetry to list
-        """
-        self.window.listWidgetTelemetry.addItem(tex)
+        
+
+#    def write_telemtry(self, tex):
+#        """
+#        Add new telemetry to list
+#        """
+#        self.winldow.listWidgetTelemetry.addItem(tex)
                     
     def command_clicked(self, item):
         """
@@ -396,8 +448,35 @@ class SerialCommander(QtGui.QMainWindow):
             if self.window.lineEditSend.hasFocus():
                 self.history_cnt-=1
                 self.historySend()
-            
+                
+        #event for temelemetry simulation
+        if event.key() == QtCore.Qt.Key_T:
+           self.tc_test()
+           
         event.accept()
+        
+    ##########################################
+    ###########TEST FUNCTION##################          
+    def tc_test(self):
+        file = open('2015_10_08_tm.txt')
+        for line in file:
+            if re.match(r'(.*)Prueba(.*?).*', line):
+                print "Start Test"
+                continue
+    
+            elif re.match(r'(.*)exe_cmd(.*?).*', line):
+                print line
+        
+            elif len(line) != 0:
+                data = line.split(',')
+                if len(data) > 1:
+                    data[0] = data[0][5:]
+                    if data[-1] == '\n':
+                        del data[-1]
+                    self._process_tm(','.join(data))
+        
+        file.close()
+    ##########################################    
         
             
 class EditCommandDialog(QtGui.QDialog):
@@ -424,7 +503,7 @@ class EditCommandDialog(QtGui.QDialog):
         los cambios y retorna la nueva lista
         """
         ret = super(EditCommandDialog, self).exec_()
-        
+        9
         if(ret):
             self.cmd_list = []
             for row in range(self.ventana.listWidgetCommand.count()):
@@ -449,6 +528,7 @@ class EditCommandDialog(QtGui.QDialog):
         """
         cmd = self.ventana.lineEditAdd.text()
         item = self.ventana.listWidgetCommand.addItem(cmd)
+        
 
 
 if __name__ == '__main__':
