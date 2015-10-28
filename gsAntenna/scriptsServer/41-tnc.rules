@@ -1,0 +1,5 @@
+SUBSYSTEMS=="usb", ATTRS{idProduct}=="7523", ATTRS{idVendor}=="1a86", SYMLINK="tnc"
+SUBSYSTEMS=="usb", ATTRS{idProduct}=="6001", ATTRS{idVendor}=="0403", SYMLINK="rotorUSB"
+SUBSYSTEM=="tty", KERNEL=="ttyS1", SYMLINK="rotor"
+SUBSYSTEM=="tty", KERNEL=="ttyS0", SYMLINK="icom"
+

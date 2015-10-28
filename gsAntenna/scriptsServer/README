@@ -1,0 +1,7 @@
+
+/etc/init.d/controlradio
+/etc/init.d/controlrotor
+/etc/init.d/ser2net
+/etc/ser2net.conf
+/etc/udev/rules.d/41-tnc.rules
+
