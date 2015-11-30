@@ -269,7 +269,7 @@ class SerialCommander(QtGui.QMainWindow):
         #self.window.listWidgetTelemetry.addItem(line)
         
         
-        if t_frame == "0x0100": #it is a new frame o 0x400
+        if t_frame == "0x0100" or t_frame == "0x0400": #it is a new frame o 0x400
             
             ## First check if the last telemetry is alright
             if len(self.telemetries) != 0:
@@ -279,9 +279,14 @@ class SerialCommander(QtGui.QMainWindow):
                      
             ## Append a new telemetry
             tel = Telemetry()
-            tel.set_data(__data)
+            tel.set_data(__data, n_frame)
             tel.set_type(t_data)
-            tel.set_state(1)
+            
+            if t_frame == "0x0400":
+                tel.set_state(2) #Finished status
+            else:
+                tel.set_state(1) #Ongoing status
+                
             self.telemetries.append(tel)
             
         elif t_frame == "0x0200": #it is an ending frame
@@ -291,14 +296,14 @@ class SerialCommander(QtGui.QMainWindow):
                 else:
                     self.telemetries[-1].set_state(3) #broken
                     
-                self.telemetries[-1].set_data(__data)
+                self.telemetries[-1].set_data(__data, n_frame)
                 
         elif t_frame == "0x0300": #it is an ongoing frame
             if len(self.telemetries) != 0: #it this is not true something is wrong
                 if self.telemetries[-1].get_state() != 1:
                     self.telemetries[-1].set_state(3) #broken
                     
-                self.telemetries[-1].set_data(__data)
+                self.telemetries[-1].set_data(__data, n_frame)
         
         self.updateTelemetryTable()
         
@@ -311,6 +316,8 @@ class SerialCommander(QtGui.QMainWindow):
             self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(tel.get_state())))
             self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(str(tel.get_type())))
             self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(','.join(tel.get_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_n_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
             self.window.tableWidgetTelemetry.show()
 
         
@@ -458,7 +465,7 @@ class SerialCommander(QtGui.QMainWindow):
     ##########################################
     ###########TEST FUNCTION##################          
     def tc_test(self):
-        file = open('2015_10_08_tm.txt')
+        file = open(sys.argv[1]) 
         for line in file:
             if re.match(r'(.*)Prueba(.*?).*', line):
                 print "Start Test"

@@ -22,7 +22,7 @@
     <item row="0" column="3">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -208,8 +208,7 @@
           </property>
           <property name="icon">
            <iconset theme="edit-clear">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
@@ -223,8 +222,7 @@
           </property>
           <property name="icon">
            <iconset theme="go-next">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
           <property name="autoDefault">
            <bool>true</bool>
@@ -400,6 +398,16 @@
             <string>Data</string>
            </property>
           </column>
+          <column>
+           <property name="text">
+            <string>Total Data</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>P Lost</string>
+           </property>
+          </column>
          </widget>
         </item>
        </layout>
@@ -445,8 +453,7 @@
   <action name="actionGuardar">
    <property name="icon">
     <iconset theme="document-save">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Guardar</string>
@@ -458,8 +465,7 @@
   <action name="actionSalir">
    <property name="icon">
     <iconset theme="application-exit">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Salir</string>
@@ -471,8 +477,7 @@
   <action name="actionAgregar_comando">
    <property name="icon">
     <iconset theme="list-add">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Agregar comando</string>
@@ -484,8 +489,7 @@
   <action name="actionAcerca_de">
    <property name="icon">
     <iconset theme="help-about">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Acerca de</string>
