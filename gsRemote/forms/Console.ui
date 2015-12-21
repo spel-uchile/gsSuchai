@@ -19,7 +19,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="3">
+    <item row="0" column="2">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
        <number>2</number>
@@ -350,24 +350,17 @@
           </column>
          </widget>
         </item>
-        <item row="2" column="1">
-         <widget class="QPushButton" name="pushButton_tcclear">
-          <property name="text">
-           <string>Clear</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="2">
-         <widget class="QPushButton" name="pushButton_tcsave">
-          <property name="text">
-           <string>Save</string>
-          </property>
-         </widget>
-        </item>
         <item row="2" column="3">
          <widget class="QPushButton" name="pushButton_tcsend">
           <property name="text">
            <string>Send</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QPushButton" name="pushButton_tcclear">
+          <property name="text">
+           <string>Clear</string>
           </property>
          </widget>
         </item>
@@ -377,15 +370,12 @@
        <attribute name="title">
         <string>Telemetría</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_6">
-        <item row="2" column="0">
-         <widget class="QPlainTextEdit" name="textEditTelemetry"/>
-        </item>
-        <item row="1" column="0">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
          <widget class="QTableWidget" name="tableWidgetTelemetry">
           <column>
            <property name="text">
-            <string>Status</string>
+            <string>State</string>
            </property>
           </column>
           <column>
@@ -395,12 +385,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Data</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Total Data</string>
+            <string>Data Length</string>
            </property>
           </column>
           <column>
@@ -408,7 +393,49 @@
             <string>P Lost</string>
            </property>
           </column>
+          <column>
+           <property name="text">
+            <string>Total  N Data</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Payload Status</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Data</string>
+           </property>
+          </column>
          </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="textEditTelemetry"/>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_tcsave">
+            <property name="text">
+             <string>Save</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -497,7 +524,6 @@
   </action>
  </widget>
  <tabstops>
-  <tabstop>tabWidget</tabstop>
   <tabstop>lineEditURL</tabstop>
   <tabstop>comboBoxPortRecv</tabstop>
   <tabstop>comboBoxPortSend</tabstop>
@@ -514,8 +540,6 @@
   <tabstop>listWidget_cmd</tabstop>
   <tabstop>comboBox_tchistory</tabstop>
   <tabstop>tableWidget_tcframe</tabstop>
-  <tabstop>pushButton_tcclear</tabstop>
-  <tabstop>pushButton_tcsave</tabstop>
   <tabstop>pushButton_tcsend</tabstop>
  </tabstops>
  <resources/>

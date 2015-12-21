@@ -35,6 +35,8 @@ from forms.EditCommandDialog_UI import Ui_DialogEditCommandList
 from client import Client
 from telemetry import Telemetry
 
+from pymongo import MongoClient
+
 
 class SerialCommander(QtGui.QMainWindow):
     """
@@ -55,6 +57,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.history_cnt = 0
         self.timestamp = False
         self.put_timestamp = True
+        self.mongo_client = MongoClient('localhost', 27017)
 
         #Load config
         try:
@@ -150,6 +153,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.listWidget_cmd.itemDoubleClicked.connect(self.tc_addtoframe)
         self.window.pushButton_tcclear.clicked.connect(self.tc_clearframe)
         self.window.pushButton_tcsend.clicked.connect(self.tc_send)
+        self.window.pushButton_tcsave.clicked.connect(self.tc_save)
 
     def tc_filter(self, text):
         """
@@ -260,10 +264,13 @@ class SerialCommander(QtGui.QMainWindow):
     def _process_tm(self, data):
         ts = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
         data = data.split(',')
-        t_frame = data[0]
-        n_frame = data[1]
-        t_data = data[2]
-        __data = data[3:]
+        t_frame = data[0] # type of frame
+        n_frame = data[1] # number of frame
+        t_data = data[2] # type of telemetry payload (only if it is a frame of type 0x100 or 0x400)
+        l_data = data[3] # length of data (only if it is a frame of type 0x100 or 0x400)
+        p_status = data[4] # payload status (only if it is a frame of type 0x100 or 0x400)
+        _data = data[5:] # data for frames 0x100 or 0x400
+        __data = [data[3], data[4] ] + _data # data for other frames 
 
         line = "({4})[{0}][{1}]-[{2}] {3}".format(t_frame, n_frame, t_data, __data, ts)
         #self.window.listWidgetTelemetry.addItem(line)
@@ -279,8 +286,10 @@ class SerialCommander(QtGui.QMainWindow):
                      
             ## Append a new telemetry
             tel = Telemetry()
-            tel.set_data(__data, n_frame)
-            tel.set_type(t_data)
+            tel.set_data(_data, n_frame)
+            tel.set_payload(t_data)
+            tel.set_l_data(l_data)
+            tel.set_p_status(p_status)
             
             if t_frame == "0x0400":
                 tel.set_state(2) #Finished status
@@ -314,13 +323,17 @@ class SerialCommander(QtGui.QMainWindow):
             self.window.tableWidgetTelemetry.insertRow(i)
             tel = self.telemetries[i]
             self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(tel.get_state())))
-            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(str(tel.get_type())))
-            self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(','.join(tel.get_data())))
-            self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_n_data())))
-            self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
+            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(str(tel.get_payload())))
+            self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(str(tel.get_l_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
+            self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(str(tel.get_n_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 5, QtGui.QTableWidgetItem(str(tel.get_p_status())))
+            self.window.tableWidgetTelemetry.setItem(i, 6, QtGui.QTableWidgetItem(','.join(tel.get_data())))
             self.window.tableWidgetTelemetry.show()
 
-        
+    def tc_save(self):
+        for i in range(0, len(self.telemetries)):
+            self.telemetries[i].save(self.mongo_client)
 
 #    def write_telemtry(self, tex):
 #        """
