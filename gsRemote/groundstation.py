@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: latin-1 -*-
 
 #/*                          SERIAL COMMANDER
@@ -481,11 +481,11 @@ class SerialCommander(QtGui.QMainWindow):
         file = open(sys.argv[1]) 
         for line in file:
             if re.match(r'(.*)Prueba(.*?).*', line):
-                print "Start Test"
+                print("Start Test")
                 continue
     
             elif re.match(r'(.*)exe_cmd(.*?).*', line):
-                print line
+                print(line)
         
             elif len(line) != 0:
                 data = line.split(',')

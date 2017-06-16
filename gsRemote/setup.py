@@ -1,8 +1,8 @@
 from distutils.core import setup
 
 setup(
-    name='serialcommander',
-    version='0.4.1',
+    name='groundstation',
+    version='0.4.2',
     url='https://github.com/carlgonz/SerialCommander',
     license='GPL v3',
     author='Carlos Gonzalez',
@@ -10,9 +10,9 @@ setup(
     description='A simple serial interface to send commands',
 
     packages=['forms'],
-    py_modules=['serialcommander', "client"],
-    scripts=['serialcommander.py', ],
+    py_modules=['groundstation', "client", "telemetry"],
+    scripts=['groundstation.py', ],
     include_package_data=True,
-    install_requires=["pyzmq", ],
+    install_requires=["pyzmq", "pymongo"],
     data_files=[('config', ['config/config.json']), ]
 )
