@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=SUCHAI Ground Station
+Icon=/usr/share/groundstation/spel_icon.png
+Exec=groundstation.py
+Comment=SUCHAI Ground Station
+Categories=Utilities
+Terminal=false

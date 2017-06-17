@@ -14,15 +14,15 @@
    <string>SUCHAI Remote Ground Station</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../../../../../../../../../home/carlos/Eléctrica/CubeSat/PIC24FJ256GA110_EXT/TRANSCEIVER/branches/trx-v3/GUI/icon.png</normaloff>../../../../../../../../../home/carlos/Eléctrica/CubeSat/PIC24FJ256GA110_EXT/TRANSCEIVER/branches/trx-v3/GUI/icon.png</iconset>
+   <iconset resource="../../../../../../../mnt/data/Documentos/GitHub/gsSuchai/gsRemote/forms/resources.qrc">
+    <normaloff>:/img/spel_icon.png</normaloff>:/img/spel_icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="2">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -106,7 +106,7 @@
                 <bool>false</bool>
                </property>
                <property name="text">
-                <string>LOGO</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/img/spel_logo.png&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -131,7 +131,7 @@
              <item row="3" column="0">
               <widget class="QLabel" name="labelPortSend">
                <property name="text">
-                <string>Puerto escritura</string>
+                <string>Pue&amp;rto escritura</string>
                </property>
                <property name="buddy">
                 <cstring>comboBoxPortSend</cstring>
@@ -449,12 +449,12 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>26</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuArchivo">
     <property name="title">
-     <string>Archivo</string>
+     <string>Ar&amp;chivo</string>
     </property>
     <addaction name="actionGuardar"/>
     <addaction name="separator"/>
@@ -462,13 +462,13 @@
    </widget>
    <widget class="QMenu" name="menuHerramientas">
     <property name="title">
-     <string>Herramientas</string>
+     <string>Herramie&amp;ntas</string>
     </property>
     <addaction name="actionAgregar_comando"/>
    </widget>
    <widget class="QMenu" name="menuAyuda">
     <property name="title">
-     <string>Ayuda</string>
+     <string>A&amp;yuda</string>
     </property>
     <addaction name="actionAcerca_de"/>
    </widget>
@@ -483,7 +483,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Guardar</string>
+    <string>&amp;Guardar</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -495,7 +495,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Salir</string>
+    <string>&amp;Salir</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -507,7 +507,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Agregar comando</string>
+    <string>&amp;Agregar comando</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+A</string>
@@ -519,7 +519,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Acerca de</string>
+    <string>&amp;Acerca de</string>
    </property>
   </action>
  </widget>
@@ -542,7 +542,9 @@
   <tabstop>tableWidget_tcframe</tabstop>
   <tabstop>pushButton_tcsend</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../../../../../../../mnt/data/Documentos/GitHub/gsSuchai/gsRemote/forms/resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>actionSalir</sender>

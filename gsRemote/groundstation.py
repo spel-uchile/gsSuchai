@@ -29,8 +29,8 @@ from PyQt4.Qt import *
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from forms.SerialCommander_UI import Ui_MainWindow
-from forms.EditCommandDialog_UI import Ui_DialogEditCommandList
+from forms.Console import Ui_MainWindow
+from forms.EditCommandDialog import Ui_DialogEditCommandList
 
 from client import Client
 from telemetry import Telemetry
@@ -61,7 +61,7 @@ class SerialCommander(QtGui.QMainWindow):
 
         #Load config
         try:
-            config_file = open("config/config.json", 'r')
+            config_file = open("/usr/share/groundstation/config.json", 'r')
             self.config = json.load(config_file)
             config_file.close()
         except IOError:
@@ -70,7 +70,7 @@ class SerialCommander(QtGui.QMainWindow):
         #Load telecommands list
         try:
             tc_set = set()  # Avoid duplicated items
-            tc_file = open("config/cmd_list.txt", 'r')
+            tc_file = open("/usr/share/groundstation/cmd_list.txt", 'r')
 
             for line in tc_file:
                 line = line.replace(',', ', ')

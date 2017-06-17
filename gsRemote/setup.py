@@ -14,5 +14,8 @@ setup(
     scripts=['groundstation.py', ],
     include_package_data=True,
     install_requires=["pyzmq", "pymongo"],
-    data_files=[('config', ['config/config.json']), ]
+    data_files=[('share/groundstation/', ['config/config.json']),
+                ('share/groundstation/', ['config/cmd_list.txt']),
+                ('share/groundstation/', ['forms/spel_icon.png']),
+                ('share/applications', ['org.spel.groundstation.desktop'])]
 )
