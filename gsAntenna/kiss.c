@@ -19,12 +19,14 @@
 
 #define PORT 10			//TM-TC port
 #define DPORT 11		//Debug port
-#define CPORT 12        //Commands port
+#define CPORT 12                //Commands port
 
 #define S_ADDRESS 10		//source
-#define D_ADDRESS 0		    //pic node
-#define R_ADDRESS_TNC 9		//tnc node (router)
-#define R_ADDRESS_TRX 5		//trx node (router)
+#define D_ADDRESS 0		//pic node
+#define R_ADDRESS_TNC  9	//tnc node (router)
+#define R_ADDRESS_TRX  5	//trx node (router)
+#define R_ADDRESS_OBC  0	//tnc node (router)
+#define R_ADDRESS_GND 10	//trx node (router)
 
 #define SERVER_TIDX 0
 #define CLIENT_TIDX 1
@@ -38,6 +40,11 @@ const char *type_tc = "tc";      //Message is telecomand
 const char *type_db = "debug";   //Message is debug telecomand
 const char *type_tnc = "tnc";    //Message is a tnc command
 const char *type_trx = "trx";    //Message is a trx command
+
+const char *dest_obc = "obc";    //Message is telecomand
+const char *dest_trx = "trx";    //Message is debug telecomand
+const char *dest_tnc = "tnc";    //Message is a tnc command
+const char *dest_gnd = "gnd";    //Message is a trx command
 
 nanocom_conf_t tnc_config;
 
@@ -179,7 +186,7 @@ CSP_DEFINE_TASK(task_client)
         message = s_recv(receiver);   
         if(!message) continue;
         
-        printf("[Client] Received message: %s", message);
+        printf("[Client] Received message: %s\n", message);
         
         root = json_loads(message, 0, &error);
         if(!root) continue;
@@ -293,9 +300,31 @@ CSP_DEFINE_TASK(task_client)
                 //PING
                 else if(strcmp(key, "ping") == 0)
                 {
-                    ivalue = (uint8_t)json_integer_value(value);
-                    int result = csp_ping(ivalue, 5*csp_timeout, 10, CSP_O_NONE);
-                    printf("Ping to %d of size %d took %d ms.\n", ivalue, 10, result);
+                    char *dest = json_string(value);
+                    //ivalue = (uint8_t)json_integer_value(value);
+                    
+                    // Parse ping address
+                    if(strcmp(dest, "obc") == 0)
+                        ivalue = R_ADDRESS_OBC;
+                    else if(strcmp(dest, "trx") == 0)
+                        ivalue = R_ADDRESS_TRX;
+                    else if(strcmp(dest, "tnc") == 0)
+                        ivalue = R_ADDRESS_TNC;
+                    else if(strcmp(dest, "gnd") == 0)
+                        ivalue = R_ADDRESS_GND;
+                    else
+                        ivalue = -1;
+                    
+                    // Send ping command
+                    if(ivalue != -1)
+                    {
+                        int result = csp_ping(ivalue, 5*csp_timeout, 10, CSP_O_NONE);
+                        printf("Ping to %d of size %d took %d ms.\n", ivalue, 10, result);
+                    }
+                    else
+                    {
+                        printf("Invalid ping address: %s\n", dest);
+                    }
                 }
                 else
                 {
