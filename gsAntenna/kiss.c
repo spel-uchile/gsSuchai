@@ -300,7 +300,7 @@ CSP_DEFINE_TASK(task_client)
                 //PING
                 else if(strcmp(key, "ping") == 0)
                 {
-                    char *dest = json_string(value);
+                    char *dest = json_string_value(value);
                     //ivalue = (uint8_t)json_integer_value(value);
                     
                     // Parse ping address
