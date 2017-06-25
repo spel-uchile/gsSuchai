@@ -300,7 +300,7 @@ CSP_DEFINE_TASK(task_client)
                 //PING
                 else if(strcmp(key, "ping") == 0)
                 {
-                    char *dest = json_string(value);
+                    char *dest = json_string_value(value);
                     //ivalue = (uint8_t)json_integer_value(value);
                     
                     // Parse ping address
@@ -313,10 +313,10 @@ CSP_DEFINE_TASK(task_client)
                     else if(strcmp(dest, "gnd") == 0)
                         ivalue = R_ADDRESS_GND;
                     else
-                        ivalue = -1;
+                        ivalue = 0xFF;
                     
                     // Send ping command
-                    if(ivalue != -1)
+                    if(ivalue != 0xFF)
                     {
                         int result = csp_ping(ivalue, 5*csp_timeout, 10, CSP_O_NONE);
                         printf("Ping to %d of size %d took %d ms.\n", ivalue, 10, result);
