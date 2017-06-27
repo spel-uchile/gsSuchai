@@ -48,7 +48,6 @@ const char *dest_gnd = "gnd";    //Message is a trx command
 
 nanocom_conf_t tnc_config;
 
-int csp_timeout = 1000;          //CSP timeout en ms
 
 /**
  * Server task
@@ -160,9 +159,15 @@ CSP_DEFINE_TASK(task_client)
     void *context = zmq_ctx_new();
     void *receiver = zmq_socket(context, ZMQ_PULL);
     zmq_bind(receiver, "tcp://*:5557");
+    //Socket to send prints
+    void *publisher = zmq_socket(context, ZMQ_PUB);
+    int rc = zmq_bind(publisher, "tcp://*:5558");
+    assert(rc == 0);
     
     int i;
+    int csp_timeout = 1000;          //CSP timeout en ms
     char *message;
+    char dbg_str[1024];
     json_t *root;
     json_t *data;
     json_t *type;
@@ -195,7 +200,9 @@ CSP_DEFINE_TASK(task_client)
         type = json_object_get(root, "type"); 
         if(!type)
         {
-            printf("[Client] Malformed message\n");
+            sprintf(dbg_str, "[Client] Malformed message\n");
+            printf("%s", dbg_str);
+            s_send (publisher, dbg_str);
         }
         //TC message
         else if(strcmp(json_string_value(type), type_tc) == 0)
@@ -205,13 +212,12 @@ CSP_DEFINE_TASK(task_client)
             uint16_t buffer[len];
             json_t *num;
             
-            for(i = 0; i < json_array_size(data); i++)
+            for(i = 0; i < len; i++)
             {
                 num = json_array_get(data, i);
                 buffer[i] = (uint16_t)json_integer_value(num);
             }
             
-            //TODO: Check this
             csp_transaction(0, D_ADDRESS, PORT, csp_timeout, buffer, len*sizeof(uint16_t), NULL, 0);
         }
         //Console command message
@@ -249,6 +255,7 @@ CSP_DEFINE_TASK(task_client)
                     ivalue = (uint8_t)json_integer_value(value);
                     tnc_config.tx_baud = ivalue;
                     com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_conf_remote(&tnc_config, publisher);
                 }
                 //Set rx baud
                 else if(strcmp(key, "set_rx_baud") == 0)
@@ -256,6 +263,7 @@ CSP_DEFINE_TASK(task_client)
                     ivalue = (uint8_t)json_integer_value(value);
                     tnc_config.rx_baud = ivalue;
                     com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_conf_remote(&tnc_config, publisher);
                 }
                 //Set do rs
                 else if(strcmp(key, "set_do_rs") == 0)
@@ -263,6 +271,7 @@ CSP_DEFINE_TASK(task_client)
                     ivalue = (uint8_t)json_integer_value(value);
                     tnc_config.do_rs = ivalue;
                     com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_conf_remote(&tnc_config, publisher);
                 }
                 //Set do random
                 else if(strcmp(key, "set_do_random") == 0)
@@ -270,6 +279,7 @@ CSP_DEFINE_TASK(task_client)
                     ivalue = (uint8_t)json_integer_value(value);
                     tnc_config.do_random = ivalue;
                     com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_conf_remote(&tnc_config, publisher);
                 }
                 //Set do viterbi
                 else if(strcmp(key, "set_do_viterbi") == 0)
@@ -277,6 +287,7 @@ CSP_DEFINE_TASK(task_client)
                     ivalue = (uint8_t)json_integer_value(value);
                     tnc_config.do_viterbi = ivalue;
                     com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_conf_remote(&tnc_config, publisher);
                 }
                 //Set preamble_length
                 else if(strcmp(key, "set_preamble") == 0)
@@ -284,18 +295,21 @@ CSP_DEFINE_TASK(task_client)
                     ivalue = (uint16_t)json_integer_value(value);
                     tnc_config.preamble_length = ivalue;
                     com_set_conf(&tnc_config, NODE_TNC, csp_timeout);
+                    com_print_conf_remote(&tnc_config, publisher);
                 }
                 //Get config
                 else if(strcmp(key, "get_config") == 0)
                 {
                     com_get_conf(&tnc_config, NODE_TNC, csp_timeout);
                     com_print_conf(&tnc_config);
+                    com_print_conf_remote(&tnc_config, publisher);
                 }
                 //Get status
                 else if(strcmp(key, "get_status") == 0)
                 {
                     com_get_status(&tnc_config, NODE_TNC, csp_timeout);
                     com_print_status(&tnc_config);
+                    com_print_status_remote(&tnc_config, publisher);
                 }
                 //PING
                 else if(strcmp(key, "ping") == 0)
@@ -319,23 +333,30 @@ CSP_DEFINE_TASK(task_client)
                     if(ivalue != 0xFF)
                     {
                         int result = csp_ping(ivalue, 5*csp_timeout, 10, CSP_O_NONE);
-                        printf("Ping to %d of size %d took %d ms.\n", ivalue, 10, result);
+                        sprintf(dbg_str, "Ping to %d of size %d took %d ms.\n", ivalue, 10, result);
+                        printf("%s", dbg_str);
+                        s_send (publisher, dbg_str);
                     }
                     else
                     {
-                        printf("Invalid ping address: %s\n", dest);
+                        sprintf(dbg_str, "Invalid ping address: %s\n", dest);
+                        printf("%s", dbg_str);
+                        s_send (publisher, dbg_str);
                     }
                 }
                 else
                 {
-                    printf("Invalid tnc command\n");
+                    sprintf(dbg_str, "Invalid tnc command\n");
+                    printf("%s", dbg_str);
+                    s_send (publisher, dbg_str);
                 }
             }
         }
         //Not implemented message type
         else
         {
-            printf("[Client] Invalid message\n");
+            sprintf(dbg_str, "[Client] Invalid message\n");
+            s_send (publisher, dbg_str);
         }
         
         json_decref(root);
@@ -523,6 +544,16 @@ void com_print_conf(nanocom_conf_t * com_conf) {
     printf("HK: interval %u\r\n", com_conf->hk_interval);
 }
 
+void com_print_conf_remote(nanocom_conf_t * com_conf, void *socket) {
+    char dbg_str[1024];
+    
+    sprintf(dbg_str, "FEC: rs %u, random %u, viterbi %u\r\n", com_conf->do_rs, com_conf->do_random, com_conf->do_viterbi); s_send(socket, dbg_str);
+    sprintf(dbg_str, "RADIO: rx %u, tx %u, preamble %u, max temp: %d\r\n", com_conf->rx_baud, com_conf->tx_baud, com_conf->preamble_length, com_conf->tx_max_temp); s_send(socket, dbg_str); s_send(socket, dbg_str);
+    sprintf(dbg_str, "MORSE: enable: %u, mode: %u,  delay %u, pospone %u, wpm %u, batt level %u, text %s\r\n", com_conf->morse_enable, com_conf->morse_mode, com_conf->morse_inter_delay, com_conf->morse_pospone, com_conf->morse_wpm, com_conf->morse_bat_level, com_conf->morse_text); s_send(socket, dbg_str);
+    sprintf(dbg_str, "MORSE: cycle: %u, volt:%u rxc:%u txc:%u tempa:%u tempb:%u rssi:%u rferr:%u\r\n", com_conf->morse_cycle, com_conf->morse_en_voltage, com_conf->morse_en_rx_count, com_conf->morse_en_tx_count, com_conf->morse_en_temp_a, com_conf->morse_en_temp_b, com_conf->morse_en_rssi, com_conf->morse_en_rf_err); s_send(socket, dbg_str);
+    sprintf(dbg_str, "HK: interval %u\r\n", com_conf->hk_interval); s_send(socket, dbg_str);
+}
+
 void com_print_status(nanocom_data_t * com_stat) {
         printf("Bits corrected total: %lu\r\n", com_stat->bit_corr_tot);
         printf("Bytes corrected total:  %lu\r\n", com_stat->byte_corr_tot);
@@ -536,4 +567,21 @@ void com_print_status(nanocom_data_t * com_stat) {
         printf("Last TX current:  %d\r\n", com_stat->last_txcurrent);
         printf("Last Battery Voltage:  %d\r\n", com_stat->last_batt_volt);
         printf("Bootcount:  %lu\r\n", com_stat->bootcount);
+}
+
+void com_print_status_remote(nanocom_data_t * com_stat, void *socket) {
+        char dbg_str[1024];
+        
+        sprintf(dbg_str, "Bits corrected total: %lu\r\n", com_stat->bit_corr_tot); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Bytes corrected total:  %lu\r\n", com_stat->byte_corr_tot); s_send(socket, dbg_str);
+        sprintf(dbg_str, "RX packets:  %lu\r\n", com_stat->rx); s_send(socket, dbg_str);
+        sprintf(dbg_str, "RX checksum errors:  %lu\r\n", com_stat->rx_err); s_send(socket, dbg_str);
+        sprintf(dbg_str, "TX packets:  %lu\r\n", com_stat->tx); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Freq. Error:  %d\r\n", com_stat->last_rferr); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Last RSSI:  %d\r\n", com_stat->last_rssi); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Last A temp:  %d\r\n", com_stat->last_temp_a); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Last B temp:  %d\r\n", com_stat->last_temp_b); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Last TX current:  %d\r\n", com_stat->last_txcurrent); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Last Battery Voltage:  %d\r\n", com_stat->last_batt_volt); s_send(socket, dbg_str);
+        sprintf(dbg_str, "Bootcount:  %lu\r\n", com_stat->bootcount); s_send(socket, dbg_str);
 }
