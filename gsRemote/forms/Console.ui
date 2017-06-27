@@ -208,7 +208,8 @@
           </property>
           <property name="icon">
            <iconset theme="edit-clear">
-            <normaloff>.</normaloff>.</iconset>
+            <normaloff/>
+           </iconset>
           </property>
          </widget>
         </item>
@@ -222,7 +223,8 @@
           </property>
           <property name="icon">
            <iconset theme="go-next">
-            <normaloff>.</normaloff>.</iconset>
+            <normaloff/>
+           </iconset>
           </property>
           <property name="autoDefault">
            <bool>true</bool>
@@ -242,6 +244,13 @@
         <item row="1" column="0" colspan="5">
          <widget class="QLineEdit" name="lineEditSend"/>
         </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="checkBoxTimestamp">
+          <property name="text">
+           <string>Time stamp</string>
+          </property>
+         </widget>
+        </item>
        </layout>
        <zorder>textEditTerminal</zorder>
        <zorder>lineEditSend</zorder>
@@ -249,6 +258,7 @@
        <zorder>pushButton</zorder>
        <zorder>checkBoxCR</zorder>
        <zorder>checkBoxLF</zorder>
+       <zorder>checkBoxTimestamp</zorder>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -449,7 +459,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>30</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuArchivo">
@@ -480,7 +490,8 @@
   <action name="actionGuardar">
    <property name="icon">
     <iconset theme="document-save">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Guardar</string>
@@ -492,7 +503,8 @@
   <action name="actionSalir">
    <property name="icon">
     <iconset theme="application-exit">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Salir</string>
@@ -504,7 +516,8 @@
   <action name="actionAgregar_comando">
    <property name="icon">
     <iconset theme="list-add">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Agregar comando</string>
@@ -516,7 +529,8 @@
   <action name="actionAcerca_de">
    <property name="icon">
     <iconset theme="help-about">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Acerca de</string>

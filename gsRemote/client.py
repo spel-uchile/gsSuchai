@@ -28,7 +28,7 @@ class Client(QObject):
 
     new_message = pyqtSignal(str)
 
-    def __init__(self, server="localhost", send_port="5557", recv_port="5556"):
+    def __init__(self, server="localhost", send_port="5557", recv_port="5556", dbg_port="5558"):
         QObject.__init__(self)
         self.context = zmq.Context()
 
@@ -41,6 +41,12 @@ class Client(QObject):
         self.recv_thread = Thread(target=self.receive, args=args)
         self.recv_thread.daemon = True
         self.recv_thread.start()
+        
+        #Start debug receiver thread
+        dargs = (self.context, server, dbg_port)
+        self.rdbg_thread = Thread(target=self.receive, args=dargs)
+        self.rdbg_thread.daemon = True
+        self.rdbg_thread.start()
 
     def send(self, message):
         self.sender_socket.send(message.encode())
@@ -53,5 +59,6 @@ class Client(QObject):
 
         while True:
             #Get the publisher's message
-            message = receiver_socket.recv()
-            self.new_message.emit(str(message))
+            message = receiver_socket.recv_string()
+            print(message)
+            self.new_message.emit(message)

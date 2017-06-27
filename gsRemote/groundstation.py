@@ -24,6 +24,9 @@ import sys
 import datetime
 import json
 import re
+import os
+
+from pymongo import MongoClient
 
 from PyQt4.Qt import *
 from PyQt4 import QtGui
@@ -35,7 +38,17 @@ from forms.EditCommandDialog import Ui_DialogEditCommandList
 from client import Client
 from telemetry import Telemetry
 
-from pymongo import MongoClient
+
+config_path = "/usr/share/groundstation/"
+print(config_path)
+if not os.path.exists(config_path):
+    config_path = "/usr/local/share/groundstation/"
+    print(config_path)
+    if not os.path.exists(config_path):
+        config_path = "config/"
+        print(config_path)
+    else:
+        print("Warning: no application path found")
 
 
 class SerialCommander(QtGui.QMainWindow):
@@ -43,7 +56,7 @@ class SerialCommander(QtGui.QMainWindow):
     Main class, creates and configures main window. Also sets signals and
     slots.
     """
-    #Se�ales
+    #Signals
     _new_char = pyqtSignal(type(""))  # New char signal
     
     def __init__(self):
@@ -61,7 +74,7 @@ class SerialCommander(QtGui.QMainWindow):
 
         #Load config
         try:
-            config_file = open("/usr/share/groundstation/config.json", 'r')
+            config_file = open(config_path + "config.json", 'r')
             self.config = json.load(config_file)
             config_file.close()
         except IOError:
@@ -70,7 +83,7 @@ class SerialCommander(QtGui.QMainWindow):
         #Load telecommands list
         try:
             tc_set = set()  # Avoid duplicated items
-            tc_file = open("/usr/share/groundstation/cmd_list.txt", 'r')
+            tc_file = open(config_path + "cmd_list.txt", 'r')
 
             for line in tc_file:
                 line = line.replace(',', ', ')
@@ -113,10 +126,12 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.lineEditURL.setText(available_hosts[0])
 
         #Ports
-        available_ports = self.config.get("ports", ["", ])
-        available_ports.reverse()
-        self.window.comboBoxPortRecv.addItems(available_ports)
-        self.window.comboBoxPortSend.addItems(available_ports)
+        available_ports_send = self.config.get("ports_send", ["", ])
+        available_ports_send.reverse()
+        self.window.comboBoxPortSend.addItems(available_ports_send)
+        available_ports_recv = self.config.get("ports_recv", ["", ])
+        available_ports_recv.reverse()
+        self.window.comboBoxPortRecv.addItems(available_ports_recv)
 
     def setup_send(self):
         """
@@ -128,7 +143,7 @@ class SerialCommander(QtGui.QMainWindow):
         #Conexiones
         self.window.listWidgetCommand.itemDoubleClicked.connect(self.command_clicked)
         self.window.pushButtonSend.clicked.connect(self.send_msg)
-        # self.window.checkBoxTimestamp.toggled.connect(self.timestamp_toggle)
+        self.window.checkBoxTimestamp.toggled.connect(self.timestamp_toggle)
     
     def setup_actions(self):
         """
@@ -237,12 +252,19 @@ class SerialCommander(QtGui.QMainWindow):
         """
         Log received msg to terminal
         """
-
+        text = text.replace('\n', '')
+        text = text.replace('\r', '')
+        
         #Separate msg fields. If fail, just copy the text
-        msg = json.loads(str(text))
-        typ = msg.get("type", "other")
-        data = msg.get("data", text)
-        log = "[{0}] {1}\n".format(typ, data)
+        try:
+            msg = json.loads(text)
+            typ = msg.get("type", "other")
+            data = msg.get("data", text)
+            log = "[{0}] {1}\n".format(typ, data)
+        except:
+            typ = "debug"
+            data = text
+            log = "[{0}] {1}\n".format(typ, data)
         
         #Moves cursor to end
         c = self.window.textEditTerminal.textCursor()
@@ -256,6 +278,9 @@ class SerialCommander(QtGui.QMainWindow):
 
         #Normal mode, just write text in terminal
         self.window.textEditTerminal.insertPlainText(log)
+        
+        c.movePosition(QTextCursor.End)
+        self.window.textEditTerminal.setTextCursor(c)
 
         #Process special msgs
         if typ == "tm":
@@ -299,7 +324,7 @@ class SerialCommander(QtGui.QMainWindow):
             self.telemetries.append(tel)
             
         elif t_frame == "0x0200": #it is an ending frame
-            if len(self.telemetries) != 0: #it this is not true something is wrong
+            if len(self.telemetries) != 0: #if this is not true something is wrong
                 if self.telemetries[-1].get_state() == 1:
                     self.telemetries[-1].set_state(2) #finished
                 else:
