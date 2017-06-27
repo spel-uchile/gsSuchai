@@ -40,13 +40,10 @@ from telemetry import Telemetry
 
 
 config_path = "/usr/share/groundstation/"
-print(config_path)
 if not os.path.exists(config_path):
     config_path = "/usr/local/share/groundstation/"
-    print(config_path)
     if not os.path.exists(config_path):
         config_path = "config/"
-        print(config_path)
     else:
         print("Warning: no application path found")
 

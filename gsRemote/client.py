@@ -60,5 +60,4 @@ class Client(QObject):
         while True:
             #Get the publisher's message
             message = receiver_socket.recv_string()
-            print(message)
             self.new_message.emit(message)
