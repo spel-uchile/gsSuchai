@@ -65,6 +65,8 @@ class SerialCommander(QtGui.QMainWindow):
         self.receiver_thread = None
         self.history = []
         self.history_cnt = 0
+        self.tc_history = {}
+        self.tc_history_cnt = 0
         self.timestamp = False
         self.put_timestamp = True
         self.mongo_client = MongoClient('localhost', 27017)
@@ -166,6 +168,8 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.pushButton_tcclear.clicked.connect(self.tc_clearframe)
         self.window.pushButton_tcsend.clicked.connect(self.tc_send)
         self.window.pushButton_tcsave.clicked.connect(self.tc_save)
+        self.window.pushButton_tcdelete.clicked.connect(self.tc_delete)
+        self.window.comboBox_tchistory.activated.connect(self.tc_load_hist)
 
     def tc_filter(self, text):
         """
@@ -207,6 +211,7 @@ class SerialCommander(QtGui.QMainWindow):
         Send current tc frame
         """
         tc_frame = []
+        tmp_tc_frame = []
         cmd_stop = 0xfffe
         rows = self.window.tableWidget_tcframe.rowCount()
 
@@ -218,6 +223,16 @@ class SerialCommander(QtGui.QMainWindow):
             item = self.window.tableWidget_tcframe.item(i, 2)
             value = int(str(item.text()), 10)
             tc_frame.append(value)
+            
+            item = self.window.tableWidget_tcframe.item(i, 0)
+            name = str(item.text())
+            
+            # Add command line to hist
+            cmd_par = (name, tc, value)
+            tmp_tc_frame.append(cmd_par)
+        
+        # Send frame to history
+        self.tc_add_hist(tmp_tc_frame)
 
         tc_frame.append(cmd_stop)
         tc_frame.append(cmd_stop)
@@ -227,6 +242,40 @@ class SerialCommander(QtGui.QMainWindow):
 
         tc_msj = json.dumps(tc_json)
         self.client.send(tc_msj)
+        
+    def tc_delete(self):
+        """
+        Delete selected TC row
+        """
+        item = self.window.tableWidget_tcframe.currentRow()
+        self.window.tableWidget_tcframe.removeRow(item)
+    
+    def tc_add_hist(self, frame):
+        """
+        Add TC frame to history
+        """
+        ts = datetime.datetime.now().isoformat(' ')
+        self.tc_history[ts] = frame
+        self.window.comboBox_tchistory.addItem(ts)
+        
+    def tc_load_hist(self, item):
+        """
+        Load selected frame from history to table
+        """
+        ts = self.window.comboBox_tchistory.currentText()
+        frame = self.tc_history[ts]
+        self.tc_clearframe(None)
+        
+        for row in frame:
+            item_name = QTableWidgetItem(str(row[0]))
+            item_cmd = QTableWidgetItem(hex(row[1]))
+            item_par = QTableWidgetItem(str(row[2]))
+
+            rows = self.window.tableWidget_tcframe.rowCount()
+            self.window.tableWidget_tcframe.setRowCount(rows+1)
+            self.window.tableWidget_tcframe.setItem(rows, 0, item_name)
+            self.window.tableWidget_tcframe.setItem(rows, 1, item_cmd)
+            self.window.tableWidget_tcframe.setItem(rows, 2, item_par)
 
     def timestamp_toggle(self, value):
         """

@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='groundstation',
-    version='0.4.3',
+    version='0.4.4',
     url='https://github.com/carlgonz/SerialCommander',
     license='GPL v3',
     author='Carlos Gonzalez',
