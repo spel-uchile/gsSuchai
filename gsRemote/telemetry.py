@@ -91,27 +91,33 @@ class Telemetry():
             if self.n_data > 0:
  #               dict = self.to_dict()
                 dict = self.__dict__
-                
-                if self.payload == 0:
-                    db.tm_estado.insert_one(dict)
-                elif self.payload == 1:
-                    db.battery.insert_one(dict)
-                elif self.payload == 2:
-                    db.debug.insert_one(dict)
-                elif self.payload == 3:
-                    db.lagmuirProbe.insert_one(dict)
-                elif self.payload == 4:
-                    db.gps.insert_one(dict)
-                elif self.payload == 5:
-                    db.camera.insert_one(dict)
-                elif self.payload == 6:
-                    db.sensTemp.insert_one(dict)
-                elif self.payload == 7:
-                    db.gyro.insert_one(dict)
-                elif self.payload == 7:
-                    db.expFis.insert_one(dict)
-                else:
-                    db.unknown.insert_one(dict)
+                try:
+                    if self.payload == 0:
+                        db.tm_estado.insert_one(dict)
+                    elif self.payload == 1:
+                        db.battery.insert_one(dict)
+                    elif self.payload == 2:
+                        db.debug.insert_one(dict)
+                    elif self.payload == 3:
+                        db.lagmuirProbe.insert_one(dict)
+                    elif self.payload == 4:
+                        db.gps.insert_one(dict)
+                    elif self.payload == 5:
+                        db.camera.insert_one(dict)
+                    elif self.payload == 6:
+                        db.sensTemp.insert_one(dict)
+                    elif self.payload == 7:
+                        db.gyro.insert_one(dict)
+                    elif self.payload == 7:
+                        db.expFis.insert_one(dict)
+                    else:
+                        db.unknown.insert_one(dict)
+
+                except pymongo.errors.DuplicateKeyError as e:
+                    print("Duplicate Key: {0}".format(e))
+                    print("data not saved")
+                    return
+
             print("saved telemetries")
         else:
             print("no connection")
