@@ -14,7 +14,7 @@
    <string>SUCHAI Remote Ground Station</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../../../../../../mnt/data/Documentos/GitHub/gsSuchai/gsRemote/forms/resources.qrc">
+   <iconset resource="resources.qrc">
     <normaloff>:/img/spel_icon.png</normaloff>:/img/spel_icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -22,7 +22,7 @@
     <item row="0" column="2">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -208,8 +208,7 @@
           </property>
           <property name="icon">
            <iconset theme="edit-clear">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
@@ -223,8 +222,7 @@
           </property>
           <property name="icon">
            <iconset theme="go-next">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
           <property name="autoDefault">
            <bool>true</bool>
@@ -446,9 +444,16 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_tcsave">
+           <widget class="QPushButton" name="pushButton_tltocsv">
             <property name="text">
-             <string>Save</string>
+             <string>To CSV</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_tldelete">
+            <property name="text">
+             <string>Delete</string>
             </property>
            </widget>
           </item>
@@ -466,7 +471,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>27</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuArchivo">
@@ -497,8 +502,7 @@
   <action name="actionGuardar">
    <property name="icon">
     <iconset theme="document-save">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Guardar</string>
@@ -510,8 +514,7 @@
   <action name="actionSalir">
    <property name="icon">
     <iconset theme="application-exit">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Salir</string>
@@ -523,8 +526,7 @@
   <action name="actionAgregar_comando">
    <property name="icon">
     <iconset theme="list-add">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Agregar comando</string>
@@ -536,8 +538,7 @@
   <action name="actionAcerca_de">
    <property name="icon">
     <iconset theme="help-about">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Acerca de</string>
@@ -564,7 +565,7 @@
   <tabstop>pushButton_tcsend</tabstop>
  </tabstops>
  <resources>
-  <include location="../../../../../../../mnt/data/Documentos/GitHub/gsSuchai/gsRemote/forms/resources.qrc"/>
+  <include location="resources.qrc"/>
  </resources>
  <connections>
   <connection>

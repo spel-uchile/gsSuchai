@@ -1,4 +1,5 @@
 import pymongo
+from bson.objectid import ObjectId
 import json
 
 from pymongo import MongoClient
@@ -9,6 +10,7 @@ class Telemetry():
 #        return type('Enum', (), enums)
     
     def __init__(self):
+        self.obj_id="None"
         self.date = None
         self.data = []
         self.n_data = 0
@@ -17,6 +19,7 @@ class Telemetry():
         self.l_data = 0
         self.payload = "None"
         self.p_status = "None"
+
         
         
         # state of the telemetry
@@ -32,9 +35,18 @@ class Telemetry():
     
     def set_state(self, st):
         self.state = st
+
+    def set_date(self, date):
+        self.date = date
+
+    def set_obj_id(self, id):
+        self.obj_id = id
     
     def get_data(self):
         return self.data
+
+    def set_doc_data(self, dat):
+        self.data = dat
         
     def set_data(self, dat, n_frame):
         self.data = self.data +  dat
@@ -57,21 +69,45 @@ class Telemetry():
     
     def get_l_data(self):
         return self.l_data
-    
+
+
+    def set_doc_l_data(self, data):
+        self.l_data = data
+
     def set_l_data(self, l_data):
         self.l_data = int(l_data, 16)
         
     def get_payload(self):
         return self.payload
-    
+
+    def set_doc_payload(self, pay):
+        self.payload = pay
+
     def set_payload(self, pay):
         self.payload = int(pay, 16)
         
     def get_p_status(self):
         return self.p_status
+
+    def get_obj_id(self):
+        return self.obj_id
     
     def set_p_status(self, p_status):
         self.p_status = p_status
+
+
+    def set_last_frame(self, last_frame):
+        self.last_frame = last_frame
+
+    def get_last_frame(self):
+        return self.last_frame
+
+    def set_n_data(self, n_data):
+        self.n_data = n_data
+
+    def set_lost_p(self, lost_p):
+        self.lost_p = lost_p
+
         
     def to_dict(self):
         return {
@@ -84,7 +120,6 @@ class Telemetry():
                 "payload_status" : self.p_status
                 }
 
-        
     def save(self, client):
         if len(client.nodes) > 0:
             db = client.suchai1_tel_database
@@ -93,35 +128,44 @@ class Telemetry():
                 dict = self.__dict__
                 try:
                     if self.payload == 0:
-                        db.tm_estado.insert_one(dict)
+                        self.insert_or_update(dict, db.tm_estado)
                     elif self.payload == 1:
-                        db.battery.insert_one(dict)
+                        self.insert_or_update(dict, db.battery)
                     elif self.payload == 2:
-                        db.debug.insert_one(dict)
+                        self.insert_or_update(dict, db.debug)
                     elif self.payload == 3:
-                        db.lagmuirProbe.insert_one(dict)
+                        self.insert_or_update(dict, db.lagmuirProbe)
                     elif self.payload == 4:
-                        db.gps.insert_one(dict)
+                        self.insert_or_update(dict, db.gps)
                     elif self.payload == 5:
-                        db.camera.insert_one(dict)
+                        self.insert_or_update(dict, db.camera)
                     elif self.payload == 6:
-                        db.sensTemp.insert_one(dict)
+                        self.insert_or_update(dict, db.sensTemp)
                     elif self.payload == 7:
-                        db.gyro.insert_one(dict)
+                        self.insert_or_update(dict, db.gyro)
                     elif self.payload == 7:
-                        db.expFis.insert_one(dict)
+                        self.insert_or_update(dict, db.expFis)
                     else:
-                        db.unknown.insert_one(dict)
+                        self.insert_or_update(dict, db.unknown)
 
                 except pymongo.errors.DuplicateKeyError as e:
                     print("Duplicate Key: {0}".format(e))
                     print("data not saved")
                     return
 
-            print("saved telemetries")
+            # print("saved telemetries")
         else:
             print("no connection")
-                
-        
-        
-        
+
+
+    def insert_or_update(self, dict, collection):
+        if self.obj_id != "None":
+            res = collection.find_one(ObjectId(self.obj_id))
+            if res != None:
+                collection.update({'_id': ObjectId(self.obj_id)}, dict, True)
+                print("updated object")
+
+        else:
+            res = collection.insert_one(dict)
+            self.obj_id = res.inserted_id
+            print("inserted object")

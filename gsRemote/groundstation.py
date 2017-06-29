@@ -111,6 +111,7 @@ class SerialCommander(QtGui.QMainWindow):
         
         #Set Telemetries to be stored
         self.telemetries = []
+        self.updateTelemetryArray()
         
     def setup_comm(self):
         """
@@ -167,7 +168,9 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.listWidget_cmd.itemDoubleClicked.connect(self.tc_addtoframe)
         self.window.pushButton_tcclear.clicked.connect(self.tc_clearframe)
         self.window.pushButton_tcsend.clicked.connect(self.tc_send)
-        self.window.pushButton_tcsave.clicked.connect(self.tc_save)
+        # self.window.pushButton_tlsave.clicked.connect(self.tl_save)
+        self.window.pushButton_tldelete.clicked.connect(self.tl_delete)
+        self.window.pushButton_tltocsv.clicked.connect(self.tl_csv)
         self.window.pushButton_tcdelete.clicked.connect(self.tc_delete)
         self.window.comboBox_tchistory.activated.connect(self.tc_load_hist)
 
@@ -368,6 +371,7 @@ class SerialCommander(QtGui.QMainWindow):
                 tel.set_state(1) #Ongoing status
                 
             self.telemetries.append(tel)
+            tel.save(self.mongo_client)
             
         elif t_frame == "0x0200": #it is an ending frame
             if len(self.telemetries) != 0: #if this is not true something is wrong
@@ -377,6 +381,7 @@ class SerialCommander(QtGui.QMainWindow):
                     self.telemetries[-1].set_state(3) #broken
                     
                 self.telemetries[-1].set_data(__data, n_frame)
+                self.telemetries[-1].save(self.mongo_client)
                 
         elif t_frame == "0x0300": #it is an ongoing frame
             if len(self.telemetries) != 0: #it this is not true something is wrong
@@ -384,8 +389,57 @@ class SerialCommander(QtGui.QMainWindow):
                     self.telemetries[-1].set_state(3) #broken
                     
                 self.telemetries[-1].set_data(__data, n_frame)
+                self.telemetries[-1].save(self.mongo_client)
         
         self.updateTelemetryTable()
+
+    def updateTelemetryArray(self):
+        print(self.telemetries)
+        if len(self.mongo_client.nodes) > 0:
+            db = self.mongo_client.suchai1_tel_database
+            names = db.collection_names()
+            for i in range(0, len(names)):
+
+                if names[i] == 'tm_estado':
+                    self.updateTelemetryFromCollection( db.tm_estado)
+                elif names[i] == 'battery':
+                    self.updateTelemetryFromCollection(db.battery)
+                elif names[i] == 'debug':
+                    self.updateTelemetryFromCollection(db.debug)
+                elif names[i] == 'lagmuirProbe':
+                    self.updateTelemetryFromCollection(db.lagmuirProbe)
+                elif names[i] == 'gps':
+                    self.updateTelemetryFromCollection(db.gps)
+                elif names[i] == 'camera':
+                    self.updateTelemetryFromCollection(db.camera)
+                elif names[i] == 'sensTemp':
+                    self.updateTelemetryFromCollection(db.sensTemp)
+                elif names[i] == 'gyro':
+                    self.updateTelemetryFromCollection(db.gyro)
+                elif names[i] == 'expFis':
+                    self.updateTelemetryFromCollection(db.expFis)
+            self.updateTelemetryTable()
+
+    def updateTelemetryFromCollection(self, collection):
+        cursor = collection.find()
+        for document in cursor:
+            self.telemetries.append(self.documentToTelemetry(document))
+
+    def documentToTelemetry(self, doc):
+        tel = Telemetry()
+        tel.set_doc_data(doc["data"])
+        tel.set_doc_payload(doc["payload"])
+        tel.set_doc_l_data(doc["l_data"])
+        tel.set_p_status(doc["p_status"])
+        tel.set_last_frame(doc["last_frame"])
+        tel.set_n_data(doc["n_data"])
+        tel.set_lost_p(doc["lost_p"])
+        tel.set_p_status(doc['p_status'])
+        tel.set_state(doc['state'])
+        tel.set_date(doc['state'])
+        tel.set_obj_id(doc['_id'])
+        return tel
+
         
     def updateTelemetryTable(self):
         
@@ -402,9 +456,15 @@ class SerialCommander(QtGui.QMainWindow):
             self.window.tableWidgetTelemetry.setItem(i, 6, QtGui.QTableWidgetItem(','.join(tel.get_data())))
             self.window.tableWidgetTelemetry.show()
 
-    def tc_save(self):
+    def tl_save(self):
         for i in range(0, len(self.telemetries)):
             self.telemetries[i].save(self.mongo_client)
+
+    def tl_delete(self):
+        print("delete")
+
+    def tl_csv(self):
+        print("csv")
 
 #    def write_telemtry(self, tex):
 #        """
