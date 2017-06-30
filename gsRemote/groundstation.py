@@ -432,7 +432,7 @@ class SerialCommander(QtGui.QMainWindow):
         
     def update_telemetry_table(self):
 
-        self.window.tableWidgetTelemetry.clear()
+        self.window.tableWidgetTelemetry.clearContents()
         
         for i in range(0, len(self.telemetries)):
             self.window.tableWidgetTelemetry.removeRow(i)
