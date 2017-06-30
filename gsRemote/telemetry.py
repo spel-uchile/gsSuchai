@@ -6,8 +6,41 @@ from pymongo import MongoClient
     
 
 class Telemetry():
-#    def enum(**enums):
-#        return type('Enum', (), enums)
+
+
+    dictState = {
+        0 : "Empty",
+        1 : "In Progress",
+        2 : "Finished",
+        3 : "Broken",
+        None : "Unkown"
+    }
+
+    dictPayload = {
+        "tm_estado": 0,
+        "battery": 1,
+        "debug": 2,
+        "lagmuirProbe": 3,
+        "gps": 4,
+        "camera": 5,
+        "sensTemp": 6,
+        "gyro": 7,
+        "expFis": 8
+    }
+
+    # payloadList = [
+    #     "tm_estado",
+    #     "battery",
+    #     "debug",
+    #     "lagmuirProbe",
+    #     "gps",
+    #     "camera",
+    #     "sensTemp",
+    #     "gyro",
+    #     "expFis"
+    # ]
+
+    payloadList = list(dictPayload.keys())
     
     def __init__(self):
         self.obj_id="None"
@@ -127,26 +160,7 @@ class Telemetry():
  #               dict = self.to_dict()
                 dict = self.__dict__
                 try:
-                    if self.payload == 0:
-                        self.insert_or_update(dict, db.tm_estado)
-                    elif self.payload == 1:
-                        self.insert_or_update(dict, db.battery)
-                    elif self.payload == 2:
-                        self.insert_or_update(dict, db.debug)
-                    elif self.payload == 3:
-                        self.insert_or_update(dict, db.lagmuirProbe)
-                    elif self.payload == 4:
-                        self.insert_or_update(dict, db.gps)
-                    elif self.payload == 5:
-                        self.insert_or_update(dict, db.camera)
-                    elif self.payload == 6:
-                        self.insert_or_update(dict, db.sensTemp)
-                    elif self.payload == 7:
-                        self.insert_or_update(dict, db.gyro)
-                    elif self.payload == 7:
-                        self.insert_or_update(dict, db.expFis)
-                    else:
-                        self.insert_or_update(dict, db.unknown)
+                    self.insert_or_update(dict, self.get_collection(client))
 
                 except pymongo.errors.DuplicateKeyError as e:
                     print("Duplicate Key: {0}".format(e))
@@ -156,6 +170,61 @@ class Telemetry():
             # print("saved telemetries")
         else:
             print("no connection")
+
+    def get_collection(self, client):
+        if len(client.nodes) > 0:
+            db = client.suchai1_tel_database
+            if self.n_data > 0:
+                if self.payload == 0:
+                    return db.tm_estado
+                elif self.payload == 1:
+                    return db.battery
+                elif self.payload == 2:
+                    return db.debug
+                elif self.payload == 3:
+                    return db.lagmuirProbe
+                elif self.payload == 4:
+                    return db.gps
+                elif self.payload == 5:
+                    return db.camera
+                elif self.payload == 6:
+                    return db.sensTemp
+                elif self.payload == 7:
+                    return db.gyro
+                elif self.payload == 8:
+                    return  db.expFis
+                else:
+                    return db.unknown
+
+        return None
+
+    @staticmethod
+    def get_collection_with_payload( client, pay):
+        if len(client.nodes) > 0:
+            db = client.suchai1_tel_database
+            if pay == 0:
+                return db.tm_estado
+            elif pay == 1:
+                return db.battery
+            elif pay == 2:
+                return db.debug
+            elif pay == 3:
+                return db.lagmuirProbe
+            elif pay == 4:
+                return db.gps
+            elif pay == 5:
+                return db.camera
+            elif pay == 6:
+                return db.sensTemp
+            elif pay == 7:
+                return db.gyro
+            elif pay == 8:
+                return  db.expFis
+            else:
+                return db.unknown
+
+        return None
+
 
 
     def insert_or_update(self, dict, collection):

@@ -111,7 +111,8 @@ class SerialCommander(QtGui.QMainWindow):
         
         #Set Telemetries to be stored
         self.telemetries = []
-        self.updateTelemetryArray()
+        self.update_telemetry_array()
+
         
     def setup_comm(self):
         """
@@ -120,6 +121,8 @@ class SerialCommander(QtGui.QMainWindow):
         #Connections
         self.window.pushButtonOpenPort.clicked.connect(self.open_connection)
         self.window.pushButtonClosePort.clicked.connect(self.close_connection)
+
+        self.window.tableWidgetTelemetry.itemClicked.connect(self.visualize)
 
         #Hosts
         available_hosts = self.config.get("hosts", ["", ])
@@ -391,36 +394,22 @@ class SerialCommander(QtGui.QMainWindow):
                 self.telemetries[-1].set_data(__data, n_frame)
                 self.telemetries[-1].save(self.mongo_client)
         
-        self.updateTelemetryTable()
+        self.update_telemetry_table()
 
-    def updateTelemetryArray(self):
-        print(self.telemetries)
+    def update_telemetry_array(self):
         if len(self.mongo_client.nodes) > 0:
             db = self.mongo_client.suchai1_tel_database
             names = db.collection_names()
             for i in range(0, len(names)):
+                payloads = list(Telemetry.dictPayload.keys())
+                for j in range(0, len(payloads)):
+                    if names[i] == payloads[j]:
+                        self.update_telemetry_from_collection(Telemetry.get_collection_with_payload(self.mongo_client, Telemetry.dictPayload[payloads[j]]))
+            self.update_telemetry_table()
 
-                if names[i] == 'tm_estado':
-                    self.updateTelemetryFromCollection( db.tm_estado)
-                elif names[i] == 'battery':
-                    self.updateTelemetryFromCollection(db.battery)
-                elif names[i] == 'debug':
-                    self.updateTelemetryFromCollection(db.debug)
-                elif names[i] == 'lagmuirProbe':
-                    self.updateTelemetryFromCollection(db.lagmuirProbe)
-                elif names[i] == 'gps':
-                    self.updateTelemetryFromCollection(db.gps)
-                elif names[i] == 'camera':
-                    self.updateTelemetryFromCollection(db.camera)
-                elif names[i] == 'sensTemp':
-                    self.updateTelemetryFromCollection(db.sensTemp)
-                elif names[i] == 'gyro':
-                    self.updateTelemetryFromCollection(db.gyro)
-                elif names[i] == 'expFis':
-                    self.updateTelemetryFromCollection(db.expFis)
-            self.updateTelemetryTable()
 
-    def updateTelemetryFromCollection(self, collection):
+
+    def update_telemetry_from_collection(self, collection):
         cursor = collection.find()
         for document in cursor:
             self.telemetries.append(self.documentToTelemetry(document))
@@ -441,20 +430,27 @@ class SerialCommander(QtGui.QMainWindow):
         return tel
 
         
-    def updateTelemetryTable(self):
+    def update_telemetry_table(self):
         
         for i in range(0, len(self.telemetries)):
             self.window.tableWidgetTelemetry.removeRow(i)
             self.window.tableWidgetTelemetry.insertRow(i)
             tel = self.telemetries[i]
-            self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(tel.get_state())))
-            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(str(tel.get_payload())))
+
+
+            # self.client.new_message.connect(self.write_terminal)
+
+            self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(Telemetry.dictState[tel.get_state()])))
+            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(str(Telemetry.payloadList[tel.get_payload()])))
             self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(str(tel.get_l_data())))
             self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
             self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(str(tel.get_n_data())))
             self.window.tableWidgetTelemetry.setItem(i, 5, QtGui.QTableWidgetItem(str(tel.get_p_status())))
             self.window.tableWidgetTelemetry.setItem(i, 6, QtGui.QTableWidgetItem(','.join(tel.get_data())))
             self.window.tableWidgetTelemetry.show()
+
+    def visualize(self, item):
+        self.window.textEditTelemetry.setPlainText(str(self.telemetries[item.row()].get_data()))
 
     def tl_save(self):
         for i in range(0, len(self.telemetries)):
