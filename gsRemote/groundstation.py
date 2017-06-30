@@ -265,8 +265,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.comboBox_tchistory.addItem(ts)
         
     def tc_load_hist(self, item):
-        """
-        Load selected frame from history to table
+        """        Load selected frame from history to table
         """
         ts = self.window.comboBox_tchistory.currentText()
         frame = self.tc_history[ts]
@@ -452,7 +451,7 @@ class SerialCommander(QtGui.QMainWindow):
             self.window.tableWidgetTelemetry.show()
 
     def visualize(self, item):
-        self.window.textEditTelemetry.setPlainText(str(self.telemetries[item.row()].get_data()))
+        self.window.textEditTelemetry.setPlainText(self.telemetries[item.row()].visualize())
 
     def tl_save(self):
         for i in range(0, len(self.telemetries)):

@@ -260,3 +260,73 @@ class Telemetry():
             res = collection.remove(ObjectId(self.obj_id))
             if res != None:
                 print("removed object")
+
+
+    def visualize(self):
+        if self.payloadList[self.payload] == "tm_estado":
+            csvString = ""
+            for i in range(0, len(self.data)%len(self.statusList)+1):
+                for j in range(0, len(self.statusList)):
+                    dat = "" if (len(self.statusList)*i + j) >= len(self.data) else str(int(self.data[len(self.statusList)*i + j], 16))
+                    line = self.statusList[j] + "\t" + dat + "\n"
+                    csvString = csvString  + line
+
+
+            return csvString
+        else:
+            return str([int(d,16) for d in self.data])
+
+
+    statusList = [
+        "sta_RTC_isAlive",
+        "sta_TRX_isAlive",
+        "sta_EPS_isAlive",
+        "sta_MemEEPROM_isAlive",
+        "sta_MemSD_isAlive",
+        "sta_AntSwitch_isOpen",
+        "sta_fpl_index",
+        "sta_ppc_opMode",
+        "sta_ppc_lastResetSource",
+        "sta_ppc_hoursAlive",
+        "sta_ppc_hoursWithoutReset",
+        "sta_ppc_resetCounter",
+        "sta_ppc_wdt",
+        "sta_ppc_osc",
+        "sta_ppc_MB_nOE_USB_nINT_stat",
+        "sta_ppc_MB_nOE_MHX_stat",
+        "sta_ppc_MB_nON_MHX_stat",
+        "sta_ppc_MB_nON_SD_stat",
+        "sta_dep_ant_deployed",
+        "sta_dep_ant_tries",
+        "sta_dep_year",
+        "sta_dep_month",
+        "sta_dep_week_day",
+        "sta_dep_day_number",
+        "sta_dep_hours",
+        "sta_dep_minutes",
+        "sta_dep_seconds",
+        "sta_rtc_year",
+        "sta_rtc_month",
+        "sta_rtc_week_day",
+        "sta_rtc_day_number",
+        "sta_rtc_hours",
+        "sta_rtc_minutes",
+        "sta_rtc_seconds",
+        "sta_eps_batt_temp_0",
+        "sta_eps_batt_temp_1",
+        "sta_eps_battery_voltage",
+        "sta_eps_panel_current",
+        "sta_eps_panel_voltage_1",
+        "sta_eps_panel_voltage_2",
+        "sta_eps_panel_voltage_3",
+        "sta_eps_system_current",
+        "sta_trx_opmode",
+        "sta_trx_count_tm",
+        "sta_trx_count_tc",
+        "sta_trx_day_last_tc",
+        "sta_trx_beacon_period",
+        "sta_trx_beacon_bat_lvl",
+        "sta_trx_rx_baud",
+        "sta_trx_tx_baud"
+    ]
+
