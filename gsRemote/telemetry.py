@@ -265,7 +265,7 @@ class Telemetry():
     def visualize(self):
         if self.payloadList[self.payload] == "tm_estado":
             csvString = ""
-            for i in range(0, len(self.data)%len(self.statusList)+1):
+            for i in range(0, int((len(self.data)-1)/len(self.statusList))+1):
                 for j in range(0, len(self.statusList)):
 
                     dat = "" if (len(self.statusList)*i + j) >= len(self.data) else self.data[len(self.statusList)*i + j]
