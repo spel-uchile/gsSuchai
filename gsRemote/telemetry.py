@@ -267,14 +267,16 @@ class Telemetry():
             csvString = ""
             for i in range(0, len(self.data)%len(self.statusList)+1):
                 for j in range(0, len(self.statusList)):
-                    dat = "" if (len(self.statusList)*i + j) >= len(self.data) else str(int(self.data[len(self.statusList)*i + j], 16))
+
+                    dat = "" if (len(self.statusList)*i + j) >= len(self.data) else self.data[len(self.statusList)*i + j]
+                    dat = str(int(dat,16)) if dat != '' else dat
                     line = self.statusList[j] + "\t" + dat + "\n"
                     csvString = csvString  + line
 
 
             return csvString
         else:
-            return str([int(d,16) for d in self.data])
+            return str([int(d,16) if d != '' else d for d in self.data])
 
 
     statusList = [
