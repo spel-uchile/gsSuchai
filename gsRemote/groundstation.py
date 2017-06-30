@@ -431,6 +431,8 @@ class SerialCommander(QtGui.QMainWindow):
 
         
     def update_telemetry_table(self):
+
+        self.window.tableWidgetTelemetry.clear()
         
         for i in range(0, len(self.telemetries)):
             self.window.tableWidgetTelemetry.removeRow(i)
@@ -457,7 +459,15 @@ class SerialCommander(QtGui.QMainWindow):
             self.telemetries[i].save(self.mongo_client)
 
     def tl_delete(self):
-        print("delete")
+        indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
+        indexSet = set(indexes)
+
+        deletedTelemetries = [self.telemetries[ind] for ind in indexSet]
+        for i in range(0, len(deletedTelemetries)):
+            deletedTelemetries[i].delete(self.mongo_client)
+            self.telemetries.remove(deletedTelemetries[i])
+        self.update_telemetry_table()
+
 
     def tl_csv(self):
         print("csv")

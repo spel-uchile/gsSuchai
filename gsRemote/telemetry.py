@@ -171,6 +171,22 @@ class Telemetry():
         else:
             print("no connection")
 
+    def delete(self, client):
+        if len(client.nodes) > 0:
+            db = client.suchai1_tel_database
+                # try:
+            self.delete_from_collection(self.get_collection(client))
+
+                # except Error e:
+                #     print("Duplicate Key: {0}".format(e))
+                #     print("data not saved")
+                #     return
+
+                    # print("saved telemetries")
+        else:
+            print("no connection")
+
+
     def get_collection(self, client):
         if len(client.nodes) > 0:
             db = client.suchai1_tel_database
@@ -238,3 +254,9 @@ class Telemetry():
             res = collection.insert_one(dict)
             self.obj_id = res.inserted_id
             print("inserted object")
+
+    def delete_from_collection(self, collection):
+        if self.obj_id != "None":
+            res = collection.remove(ObjectId(self.obj_id))
+            if res != None:
+                print("removed object")
