@@ -28,19 +28,19 @@ class Telemetry():
         "expFis": 8
     }
 
-    # payloadList = [
-    #     "tm_estado",
-    #     "battery",
-    #     "debug",
-    #     "lagmuirProbe",
-    #     "gps",
-    #     "camera",
-    #     "sensTemp",
-    #     "gyro",
-    #     "expFis"
-    # ]
+    payloadList = [
+        "tm_estado",
+        "battery",
+        "debug",
+        "lagmuirProbe",
+        "gps",
+        "camera",
+        "sensTemp",
+        "gyro",
+        "expFis"
+    ]
 
-    payloadList = list(dictPayload.keys())
+    # payloadList = list(dictPayload.keys())
     
     def __init__(self):
         self.obj_id="None"
