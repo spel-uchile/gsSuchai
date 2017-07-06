@@ -340,58 +340,96 @@ class SerialCommander(QtGui.QMainWindow):
     def _process_tm(self, data):
         ts = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
         data = data.split(',')
+
+        # Header in all frames
         t_frame = data[0] # type of frame
         n_frame = data[1] # number of frame
+
+        # Header in all frames of type 0x100 or 0x400
         t_data = data[2] # type of telemetry payload (only if it is a frame of type 0x100 or 0x400)
+
+        # Header in payloads frames (not tm_estado) of type 0x100 or 0x400
         l_data = data[3] # length of data (only if it is a frame of type 0x100 or 0x400)
         p_status = data[4] # payload status (only if it is a frame of type 0x100 or 0x400)
-        _data = data[5:] # data for frames 0x100 or 0x400
-        __data = [data[3], data[4] ] + _data # data for other frames 
+
+        _data = data[5:] # data for frames 0x100 or 0x400 not estado
+        __data = [data[3], data[4] ] + _data # data for other frames not estado
+
+        _data_estado = data[3:] # data for frames 0x100 or 0x400 of type estado
+        __data_estado = [data[2]] + _data_estado # data for other frames of type estado
+
 
         line = "({4})[{0}][{1}]-[{2}] {3}".format(t_frame, n_frame, t_data, __data, ts)
         #self.window.listWidgetTelemetry.addItem(line)
         
         
         if t_frame == "0x0100" or t_frame == "0x0400": #it is a new frame o 0x400
-            
+
             ## First check if the last telemetry is alright
             if len(self.telemetries) != 0:
                 #check if the last telemetry is finished
                 if self.telemetries[-1].get_state() != 2:
                      self.telemetries[-1].set_state(3) #broken
-                     
+
             ## Append a new telemetry
             tel = Telemetry()
-            tel.set_data(_data, n_frame)
             tel.set_payload(t_data)
-            tel.set_l_data(l_data)
-            tel.set_p_status(p_status)
-            
+
+            if tel.get_payload() != 0: # Is not estado telemetry
+                tel.set_l_data(l_data)
+                tel.set_p_status(p_status)
+                tel.set_data(_data, n_frame)
+            else:
+                tel.set_data(_data_estado, n_frame)
+
+
             if t_frame == "0x0400":
                 tel.set_state(2) #Finished status
             else:
                 tel.set_state(1) #Ongoing status
-                
+
             self.telemetries.append(tel)
             tel.save(self.mongo_client)
             
         elif t_frame == "0x0200": #it is an ending frame
             if len(self.telemetries) != 0: #if this is not true something is wrong
-                if self.telemetries[-1].get_state() == 1:
-                    self.telemetries[-1].set_state(2) #finished
+                tel = self.telemetries[-1]
+                if tel.get_state() == 1: #if the last frame is in progress
+                    tel.set_state(2) #finished
+                elif tel.get_state() == 2: #if the last frame is finished
+                    tel = Telemetry()
+                    self.telemetries.append(tel)
+                    tel.save(self.mongo_client)
+                    tel.set_state(3)
+
                 else:
-                    self.telemetries[-1].set_state(3) #broken
-                    
-                self.telemetries[-1].set_data(__data, n_frame)
-                self.telemetries[-1].save(self.mongo_client)
+                    tel.set_state(3) #broken
+
+                if tel.get_payload() != 0 and tel.get_payload() != "None" : # Is not estado telemetry
+                    tel.set_data(__data, n_frame)
+                else:
+                    tel.set_data(__data_estado, n_frame)
+
+                tel.save(self.mongo_client)
                 
         elif t_frame == "0x0300": #it is an ongoing frame
+
             if len(self.telemetries) != 0: #it this is not true something is wrong
-                if self.telemetries[-1].get_state() != 1:
-                    self.telemetries[-1].set_state(3) #broken
-                    
-                self.telemetries[-1].set_data(__data, n_frame)
-                self.telemetries[-1].save(self.mongo_client)
+                tel = self.telemetries[-1]
+                if tel.get_state() != 1:
+                    if tel.get_state() == 2: # last frame has finished
+                        tel = Telemetry()
+                        self.telemetries.append(tel)
+                        tel.save(self.mongo_client)
+
+                    tel.set_state(3) #broken
+
+                if tel.get_payload() != 0 and tel.get_payload() != "None":  # Is not estado telemetry
+                    tel.set_data(__data, n_frame)
+                else:
+                    tel.set_data(__data_estado, n_frame)
+
+                tel.save(self.mongo_client)
         
         self.update_telemetry_table()
 
@@ -442,7 +480,8 @@ class SerialCommander(QtGui.QMainWindow):
             # self.client.new_message.connect(self.write_terminal)
 
             self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(Telemetry.dictState[tel.get_state()])))
-            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(str(Telemetry.payloadList[tel.get_payload()])))
+            payload_string = str(Telemetry.payloadList[tel.get_payload()]) if tel.get_payload() != "None" else "None"
+            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(payload_string))
             self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(str(tel.get_l_data())))
             self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
             self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(str(tel.get_n_data())))
@@ -607,32 +646,33 @@ class SerialCommander(QtGui.QMainWindow):
                 
         #event for temelemetry simulation
         if event.key() == QtCore.Qt.Key_T:
-           self.tc_test()
+           self.tl_parse_log(sys.argv[1])
            
         event.accept()
-        
-    ##########################################
-    ###########TEST FUNCTION##################          
-    def tc_test(self):
-        file = open(sys.argv[1]) 
+
+    def tl_parse_log(self, log):
+        file = open(sys.argv[1])
+
         for line in file:
+            print(line)
             if re.match(r'(.*)Prueba(.*?).*', line):
-                print("Start Test")
+                # print("Start Test")
                 continue
     
             elif re.match(r'(.*)exe_cmd(.*?).*', line):
                 print(line)
         
-            elif len(line) != 0:
-                data = line.split(',')
+            elif len(line) != 0 and re.search(r'\[tm\].*', line) != None:
+                data = re.sub(r'\[.*\]\[tm\] ','',line).split(',')
+                # print(data)
                 if len(data) > 1:
-                    data[0] = data[0][5:]
+                    # data[0] = data[0][5:]
                     if data[-1] == '\n':
                         del data[-1]
+                    print(data)
                     self._process_tm(','.join(data))
         
         file.close()
-    ##########################################    
         
             
 class EditCommandDialog(QtGui.QDialog):

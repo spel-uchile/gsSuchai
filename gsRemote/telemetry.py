@@ -25,7 +25,8 @@ class Telemetry():
         "camera": 5,
         "sensTemp": 6,
         "gyro": 7,
-        "expFis": 8
+        "expFis": 8,
+        "None" : "None"
     }
 
     payloadList = [
@@ -37,7 +38,8 @@ class Telemetry():
         "camera",
         "sensTemp",
         "gyro",
-        "expFis"
+        "expFis",
+        "None"
     ]
 
     # payloadList = list(dictPayload.keys())
@@ -49,7 +51,7 @@ class Telemetry():
         self.n_data = 0
         self.last_frame = -1
         self.lost_p= 0
-        self.l_data = 0
+        self.l_data = -1
         self.payload = "None"
         self.p_status = "None"
 
@@ -265,13 +267,20 @@ class Telemetry():
     def visualize(self):
         if self.payloadList[self.payload] == "tm_estado":
             csvString = ""
+            dat= ''
             for i in range(0, int((len(self.data)-1)/len(self.statusList))+1):
                 for j in range(0, len(self.statusList)):
 
                     dat = "" if (len(self.statusList)*i + j) >= len(self.data) else self.data[len(self.statusList)*i + j]
                     dat = str(int(dat,16)) if dat != '' else dat
+
+                    if dat == str(65534):
+                        break
                     line = self.statusList[j] + "\t" + dat + "\n"
                     csvString = csvString  + line
+
+                if dat == str(65534):
+                    break
 
 
             return csvString
