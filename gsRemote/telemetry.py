@@ -26,34 +26,34 @@ class Telemetry():
         "sensTemp": 6,
         "gyro": 7,
         "expFis": 8,
-        "None" : "None"
+        "unknown" : None
     }
 
-    payloadList = [
-        "tm_estado",
-        "battery",
-        "debug",
-        "lagmuirProbe",
-        "gps",
-        "camera",
-        "sensTemp",
-        "gyro",
-        "expFis",
-        "None"
-    ]
+    payloadList = {
+        0: "tm_estado",
+        1: "battery",
+        2: "debug",
+        3: "lagmuirProbe",
+        4: "gps",
+        5: "camera",
+        6: "sensTemp",
+        7: "gyro",
+        8: "expFis",
+        None: "unknown"
+    }
 
     # payloadList = list(dictPayload.keys())
     
     def __init__(self):
-        self.obj_id="None"
+        self.obj_id=None
         self.date = None
         self.data = []
         self.n_data = 0
         self.last_frame = -1
         self.lost_p= 0
         self.l_data = -1
-        self.payload = "None"
-        self.p_status = "None"
+        self.payload = None
+        self.p_status = None
 
         
         
@@ -115,8 +115,14 @@ class Telemetry():
     def get_payload(self):
         return self.payload
 
+    def get_payload_string(self):
+        return self.dictPayload[self.payload]
+
     def set_doc_payload(self, pay):
-        self.payload = pay
+        if pay == 'None':
+            self.payload = None
+        else:
+            self.payload = pay
 
     def set_payload(self, pay):
         self.payload = int(pay, 16)
@@ -246,7 +252,7 @@ class Telemetry():
 
 
     def insert_or_update(self, dict, collection):
-        if self.obj_id != "None":
+        if self.obj_id != None:
             res = collection.find_one(ObjectId(self.obj_id))
             if res != None:
                 collection.update({'_id': ObjectId(self.obj_id)}, dict, True)
@@ -258,7 +264,7 @@ class Telemetry():
             print("inserted object")
 
     def delete_from_collection(self, collection):
-        if self.obj_id != "None":
+        if self.obj_id != None:
             res = collection.remove(ObjectId(self.obj_id))
             if res != None:
                 print("removed object")
@@ -284,6 +290,16 @@ class Telemetry():
 
 
             return csvString
+        elif self.payloadList[self.payload] == "gyro":
+            csvString = 'time1' + '\t' + 'time2'+ '\t' + 'X'+ '\t' + 'Y' + '\t' + 'Z' + '\n'
+            for i in range(0, int(len(self.data)/5)):
+                init = i*5
+                line  = str(int(self.data[init],16)) + '\t' + str(int(self.data[init+1],16)) + '\t'  + str(int(self.data[init+2],16)) + '\t' + str(int(self.data[init+3],16))  + '\t' + str(int(self.data[init+4],16))  + '\n'
+                csvString = csvString + line
+            return csvString
+
+
+
         else:
             return str([int(d,16) if d != '' else d for d in self.data])
 

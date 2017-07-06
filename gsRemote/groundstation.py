@@ -353,7 +353,7 @@ class SerialCommander(QtGui.QMainWindow):
         p_status = data[4] # payload status (only if it is a frame of type 0x100 or 0x400)
 
         _data = data[5:] # data for frames 0x100 or 0x400 not estado
-        __data = [data[3], data[4] ] + _data # data for other frames not estado
+        __data = [data[2] , data[3], data[4] ] + _data # data for other frames not estado
 
         _data_estado = data[3:] # data for frames 0x100 or 0x400 of type estado
         __data_estado = [data[2]] + _data_estado # data for other frames of type estado
@@ -405,7 +405,7 @@ class SerialCommander(QtGui.QMainWindow):
                 else:
                     tel.set_state(3) #broken
 
-                if tel.get_payload() != 0 and tel.get_payload() != "None" : # Is not estado telemetry
+                if tel.get_payload() != 0 and tel.get_payload() != None : # Is not estado telemetry
                     tel.set_data(__data, n_frame)
                 else:
                     tel.set_data(__data_estado, n_frame)
@@ -424,7 +424,7 @@ class SerialCommander(QtGui.QMainWindow):
 
                     tel.set_state(3) #broken
 
-                if tel.get_payload() != 0 and tel.get_payload() != "None":  # Is not estado telemetry
+                if tel.get_payload() != 0 and tel.get_payload() != None:  # Is not estado telemetry
                     tel.set_data(__data, n_frame)
                 else:
                     tel.set_data(__data_estado, n_frame)
@@ -480,7 +480,11 @@ class SerialCommander(QtGui.QMainWindow):
             # self.client.new_message.connect(self.write_terminal)
 
             self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(Telemetry.dictState[tel.get_state()])))
-            payload_string = str(Telemetry.payloadList[tel.get_payload()]) if tel.get_payload() != "None" else "None"
+            if  (tel.get_payload() is not None):
+                print()
+                payload_string = str(Telemetry.payloadList[tel.get_payload()])
+            else:
+                payload_string = "unknown"
             self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(payload_string))
             self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(str(tel.get_l_data())))
             self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
@@ -508,6 +512,16 @@ class SerialCommander(QtGui.QMainWindow):
 
 
     def tl_csv(self):
+
+        indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
+        indexSet = set(indexes)
+
+        selectedTelemetries = [self.telemetries[ind] for ind in indexSet]
+        name = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
+        file = open(name, 'w')
+        text = selectedTelemetries[0].visualize()
+        file.write(text)
+        file.close()
         print("csv")
 
 #    def write_telemtry(self, tex):
