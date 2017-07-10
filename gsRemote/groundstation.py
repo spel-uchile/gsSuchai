@@ -174,6 +174,7 @@ class SerialCommander(QtGui.QMainWindow):
         # self.window.pushButton_tlsave.clicked.connect(self.tl_save)
         self.window.pushButton_tldelete.clicked.connect(self.tl_delete)
         self.window.pushButton_tltocsv.clicked.connect(self.tl_csv)
+        self.window.pushButton_tlimport.clicked.connect(self.tl_import)
         self.window.pushButton_tcdelete.clicked.connect(self.tc_delete)
         self.window.comboBox_tchistory.activated.connect(self.tc_load_hist)
 
@@ -524,6 +525,11 @@ class SerialCommander(QtGui.QMainWindow):
         file.close()
         print("csv")
 
+    def tl_import(self):
+        name = QtGui.QFileDialog.getOpenFileName(self, 'Open File')
+        self.tl_parse_log(name)
+
+
 #    def write_telemtry(self, tex):
 #        """
 #        Add new telemetry to list
@@ -664,8 +670,8 @@ class SerialCommander(QtGui.QMainWindow):
            
         event.accept()
 
-    def tl_parse_log(self, log):
-        file = open(sys.argv[1])
+    def tl_parse_log(self, log_path):
+        file = open(log_path)
 
         for line in file:
             print(line)
