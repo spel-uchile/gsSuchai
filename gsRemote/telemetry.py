@@ -1,19 +1,15 @@
 import pymongo
 from bson.objectid import ObjectId
-import json
 
-from pymongo import MongoClient
-    
 
-class Telemetry():
-
+class Telemetry(object):
 
     dictState = {
-        0 : "Empty",
-        1 : "In Progress",
-        2 : "Finished",
-        3 : "Broken",
-        None : "Unkown"
+        0: "Empty",
+        1: "In Progress",
+        2: "Finished",
+        3: "Broken",
+        None: "Unkown"
     }
 
     dictPayload = {
@@ -26,7 +22,7 @@ class Telemetry():
         "sensTemp": 6,
         "gyro": 7,
         "expFis": 8,
-        "unknown" : None
+        "unknown": None
     }
 
     payloadList = {
@@ -55,16 +51,13 @@ class Telemetry():
         self.payload = None
         self.p_status = None
 
-        
-        
         # state of the telemetry
         #    0 -> empty
         #    1 -> in progress
         #    2 -> finished
         #    3 -> broken
         self.state = 0
-        
-            
+
     def get_state(self):
         return self.state
     
@@ -86,10 +79,9 @@ class Telemetry():
     def set_data(self, dat, n_frame):
         self.data = self.data +  dat
         
-        
         if int(n_frame, 16) != self.last_frame+1:
-            #self.lost_p = self.lost_p  + (int(n_frame, 16) - self.last_frame+1) uncomment when bug has been fixed
-            #print str(int(n_frame, 16)) + " " +  str(self.last_frame+1)
+            # self.lost_p = self.lost_p  + (int(n_frame, 16) - self.last_frame+1) uncomment when bug has been fixed
+            # print str(int(n_frame, 16)) + " " +  str(self.last_frame+1)
             self.lost_p = self.lost_p + 1 
             self.state = 3
             
@@ -104,7 +96,6 @@ class Telemetry():
     
     def get_l_data(self):
         return self.l_data
-
 
     def set_doc_l_data(self, data):
         self.l_data = data
@@ -136,7 +127,6 @@ class Telemetry():
     def set_p_status(self, p_status):
         self.p_status = p_status
 
-
     def set_last_frame(self, last_frame):
         self.last_frame = last_frame
 
@@ -149,51 +139,35 @@ class Telemetry():
     def set_lost_p(self, lost_p):
         self.lost_p = lost_p
 
-        
     def to_dict(self):
         return {
-                "state"  : self.state,
+                "state": self.state,
                 "payload": self.payload,
-                "data" : self.data,
-                "n_data" : self.n_data,
-                "lost_p" : self.lost_p,
-                "l_data" : self.l_data,
-                "payload_status" : self.p_status
+                "data": self.data,
+                "n_data": self.n_data,
+                "lost_p": self.lost_p,
+                "l_data": self.l_data,
+                "payload_status": self.p_status
                 }
 
     def save(self, client):
         if len(client.nodes) > 0:
-            db = client.suchai1_tel_database
             if self.n_data > 0:
- #               dict = self.to_dict()
-                dict = self.__dict__
+                _dict = self.__dict__
                 try:
-                    self.insert_or_update(dict, self.get_collection(client))
-
+                    self.insert_or_update(_dict, self.get_collection(client))
                 except pymongo.errors.DuplicateKeyError as e:
                     print("Duplicate Key: {0}".format(e))
                     print("data not saved")
                     return
-
-            # print("saved telemetries")
         else:
             print("no connection")
 
     def delete(self, client):
         if len(client.nodes) > 0:
-            db = client.suchai1_tel_database
-                # try:
             self.delete_from_collection(self.get_collection(client))
-
-                # except Error e:
-                #     print("Duplicate Key: {0}".format(e))
-                #     print("data not saved")
-                #     return
-
-                    # print("saved telemetries")
         else:
             print("no connection")
-
 
     def get_collection(self, client):
         if len(client.nodes) > 0:
@@ -216,14 +190,13 @@ class Telemetry():
                 elif self.payload == 7:
                     return db.gyro
                 elif self.payload == 8:
-                    return  db.expFis
+                    return db.expFis
                 else:
                     return db.unknown
-
         return None
 
     @staticmethod
-    def get_collection_with_payload( client, pay):
+    def get_collection_with_payload(client, pay):
         if len(client.nodes) > 0:
             db = client.suchai1_tel_database
             if pay == 0:
@@ -243,66 +216,59 @@ class Telemetry():
             elif pay == 7:
                 return db.gyro
             elif pay == 8:
-                return  db.expFis
+                return db.expFis
             else:
                 return db.unknown
 
         return None
 
-
-
-    def insert_or_update(self, dict, collection):
-        if self.obj_id != None:
+    def insert_or_update(self, _dict, collection):
+        if self.obj_id is not None:
             res = collection.find_one(ObjectId(self.obj_id))
-            if res != None:
-                collection.update({'_id': ObjectId(self.obj_id)}, dict, True)
+            if res is not None:
+                collection.update({'_id': ObjectId(self.obj_id)}, _dict, True)
                 print("updated object")
-
         else:
-            res = collection.insert_one(dict)
+            res = collection.insert_one(_dict)
             self.obj_id = res.inserted_id
             print("inserted object")
 
     def delete_from_collection(self, collection):
-        if self.obj_id != None:
+        if self.obj_id is not None:
             res = collection.remove(ObjectId(self.obj_id))
-            if res != None:
+            if res is not None:
                 print("removed object")
-
 
     def visualize(self):
         if self.payloadList[self.payload] == "tm_estado":
-            csvString = ""
+            csv_string = ""
             dat= ''
             for i in range(0, int((len(self.data)-1)/len(self.statusList))+1):
                 for j in range(0, len(self.statusList)):
 
                     dat = "" if (len(self.statusList)*i + j) >= len(self.data) else self.data[len(self.statusList)*i + j]
-                    dat = str(int(dat,16)) if dat != '' else dat
+                    dat = str(int(dat, 16)) if dat != '' else dat
 
                     if dat == str(65534):
                         break
                     line = self.statusList[j] + "\t" + dat + "\n"
-                    csvString = csvString  + line
+                    csv_string = csv_string + line
 
                 if dat == str(65534):
                     break
 
+            return csv_string
 
-            return csvString
         elif self.payloadList[self.payload] == "gyro":
-            csvString = 'time1' + '\t' + 'time2'+ '\t' + 'X'+ '\t' + 'Y' + '\t' + 'Z' + '\n'
+            csv_string = 'time1' + '\t' + 'time2' + '\t' + 'X' + '\t' + 'Y' + '\t' + 'Z' + '\n'
             for i in range(0, int(len(self.data)/5)):
                 init = i*5
-                line  = str(int(self.data[init],16)) + '\t' + str(int(self.data[init+1],16)) + '\t'  + str(int(self.data[init+2],16)) + '\t' + str(int(self.data[init+3],16))  + '\t' + str(int(self.data[init+4],16))  + '\n'
-                csvString = csvString + line
-            return csvString
-
-
+                line = str(int(self.data[init], 16)) + '\t' + str(int(self.data[init+1], 16)) + '\t' + str(int(self.data[init+2], 16)) + '\t' + str(int(self.data[init+3], 16)) + '\t' + str(int(self.data[init+4], 16)) + '\n'
+                csv_string = csv_string + line
+            return csv_string
 
         else:
-            return str([int(d,16) if d != '' else d for d in self.data])
-
+            return str([int(d, 16) if d != '' else d for d in self.data])
 
     statusList = [
         "sta_RTC_isAlive",

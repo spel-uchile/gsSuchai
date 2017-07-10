@@ -342,89 +342,79 @@ class SerialCommander(QtGui.QMainWindow):
         data = data.split(',')
 
         # Header in all frames
-        t_frame = data[0] # type of frame
-        n_frame = data[1] # number of frame
+        t_frame = data[0]  # type of frame
+        n_frame = data[1]  # number of frame
 
         # Header in all frames of type 0x100 or 0x400
-        t_data = data[2] # type of telemetry payload (only if it is a frame of type 0x100 or 0x400)
+        t_data = data[2]  # type of telemetry payload (only if it is a frame of type 0x100 or 0x400)
 
         # Header in payloads frames (not tm_estado) of type 0x100 or 0x400
-        l_data = data[3] # length of data (only if it is a frame of type 0x100 or 0x400)
-        p_status = data[4] # payload status (only if it is a frame of type 0x100 or 0x400)
+        l_data = data[3]  # length of data (only if it is a frame of type 0x100 or 0x400)
+        p_status = data[4]  # payload status (only if it is a frame of type 0x100 or 0x400)
 
-        _data = data[5:] # data for frames 0x100 or 0x400 not estado
-        __data = [data[2] , data[3], data[4] ] + _data # data for other frames not estado
+        _data = data[5:]  # data for frames 0x100 or 0x400 not estado
+        __data = [data[2], data[3], data[4]] + _data  # data for other frames not estado
 
-        _data_estado = data[3:] # data for frames 0x100 or 0x400 of type estado
-        __data_estado = [data[2]] + _data_estado # data for other frames of type estado
-
+        _data_estado = data[3:]  # data for frames 0x100 or 0x400 of type estado
+        __data_estado = [data[2]] + _data_estado  # data for other frames of type estado
 
         line = "({4})[{0}][{1}]-[{2}] {3}".format(t_frame, n_frame, t_data, __data, ts)
         #self.window.listWidgetTelemetry.addItem(line)
-        
-        
-        if t_frame == "0x0100" or t_frame == "0x0400": #it is a new frame o 0x400
 
-            ## First check if the last telemetry is alright
+        if t_frame == "0x0100" or t_frame == "0x0400":  # it is a new frame o 0x400
+            # First check if the last telemetry is alright
             if len(self.telemetries) != 0:
-                #check if the last telemetry is finished
+                # check if the last telemetry is finished
                 if self.telemetries[-1].get_state() != 2:
-                     self.telemetries[-1].set_state(3) #broken
+                    self.telemetries[-1].set_state(3)  # broken
 
-            ## Append a new telemetry
+            # Append a new telemetry
             tel = Telemetry()
             tel.set_payload(t_data)
 
-            if tel.get_payload() != 0: # Is not estado telemetry
+            if tel.get_payload() != 0:  # Is not status telemetry
                 tel.set_l_data(l_data)
                 tel.set_p_status(p_status)
                 tel.set_data(_data, n_frame)
             else:
                 tel.set_data(_data_estado, n_frame)
-
-
             if t_frame == "0x0400":
-                tel.set_state(2) #Finished status
+                tel.set_state(2)  # Finished status
             else:
-                tel.set_state(1) #Ongoing status
-
+                tel.set_state(1)  # Ongoing status
             self.telemetries.append(tel)
             tel.save(self.mongo_client)
             
-        elif t_frame == "0x0200": #it is an ending frame
-            if len(self.telemetries) != 0: #if this is not true something is wrong
+        elif t_frame == "0x0200":  # it is an ending frame
+            if len(self.telemetries) != 0:  # if this is not true something is wrong
                 tel = self.telemetries[-1]
-                if tel.get_state() == 1: #if the last frame is in progress
-                    tel.set_state(2) #finished
-                elif tel.get_state() == 2: #if the last frame is finished
+                if tel.get_state() == 1:  # if the last frame is in progress
+                    tel.set_state(2)  # finished
+                elif tel.get_state() == 2:  # if the last frame is finished
                     tel = Telemetry()
                     self.telemetries.append(tel)
                     tel.save(self.mongo_client)
                     tel.set_state(3)
-
                 else:
-                    tel.set_state(3) #broken
-
-                if tel.get_payload() != 0 and tel.get_payload() != None : # Is not estado telemetry
+                    tel.set_state(3)  # broken
+                if tel.get_payload() != 0 and tel.get_payload() is not None : # Is not estado telemetry
                     tel.set_data(__data, n_frame)
                 else:
                     tel.set_data(__data_estado, n_frame)
-
                 tel.save(self.mongo_client)
                 
-        elif t_frame == "0x0300": #it is an ongoing frame
+        elif t_frame == "0x0300":  # it is an ongoing frame
 
-            if len(self.telemetries) != 0: #it this is not true something is wrong
+            if len(self.telemetries) != 0:  # it this is not true something is wrong
                 tel = self.telemetries[-1]
                 if tel.get_state() != 1:
                     if tel.get_state() == 2: # last frame has finished
                         tel = Telemetry()
                         self.telemetries.append(tel)
                         tel.save(self.mongo_client)
+                    tel.set_state(3)  # broken
 
-                    tel.set_state(3) #broken
-
-                if tel.get_payload() != 0 and tel.get_payload() != None:  # Is not estado telemetry
+                if tel.get_payload() != 0 and tel.get_payload() is not None:  # Is not estado telemetry
                     tel.set_data(__data, n_frame)
                 else:
                     tel.set_data(__data_estado, n_frame)
@@ -444,14 +434,12 @@ class SerialCommander(QtGui.QMainWindow):
                         self.update_telemetry_from_collection(Telemetry.get_collection_with_payload(self.mongo_client, Telemetry.dictPayload[payloads[j]]))
             self.update_telemetry_table()
 
-
-
     def update_telemetry_from_collection(self, collection):
         cursor = collection.find()
         for document in cursor:
-            self.telemetries.append(self.documentToTelemetry(document))
+            self.telemetries.append(self.document_to_telemetry(document))
 
-    def documentToTelemetry(self, doc):
+    def document_to_telemetry(self, doc):
         tel = Telemetry()
         tel.set_doc_data(doc["data"])
         tel.set_doc_payload(doc["payload"])
@@ -466,22 +454,15 @@ class SerialCommander(QtGui.QMainWindow):
         tel.set_obj_id(doc['_id'])
         return tel
 
-        
     def update_telemetry_table(self):
-
         self.window.tableWidgetTelemetry.clearContents()
         
         for i in range(0, len(self.telemetries)):
             self.window.tableWidgetTelemetry.removeRow(i)
             self.window.tableWidgetTelemetry.insertRow(i)
             tel = self.telemetries[i]
-
-
-            # self.client.new_message.connect(self.write_terminal)
-
             self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(Telemetry.dictState[tel.get_state()])))
-            if  (tel.get_payload() is not None):
-                print()
+            if tel.get_payload() is not None:
                 payload_string = str(Telemetry.payloadList[tel.get_payload()])
             else:
                 payload_string = "unknown"
@@ -502,32 +483,27 @@ class SerialCommander(QtGui.QMainWindow):
 
     def tl_delete(self):
         indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
-        indexSet = set(indexes)
+        index_set = set(indexes)
 
-        deletedTelemetries = [self.telemetries[ind] for ind in indexSet]
-        for i in range(0, len(deletedTelemetries)):
-            deletedTelemetries[i].delete(self.mongo_client)
-            self.telemetries.remove(deletedTelemetries[i])
+        deleted_telemetries = [self.telemetries[ind] for ind in index_set]
+        for i in range(0, len(deleted_telemetries)):
+            deleted_telemetries[i].delete(self.mongo_client)
+            self.telemetries.remove(deleted_telemetries[i])
         self.update_telemetry_table()
 
-
     def tl_csv(self):
-
         indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
-        indexSet = set(indexes)
-
-        selectedTelemetries = [self.telemetries[ind] for ind in indexSet]
+        index_set = set(indexes)
+        selected_telemetries = [self.telemetries[ind] for ind in index_set]
         name = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
         file = open(name, 'w')
-        text = selectedTelemetries[0].visualize()
+        text = selected_telemetries[0].visualize()
         file.write(text)
         file.close()
-        print("csv")
 
     def tl_import(self):
         name = QtGui.QFileDialog.getOpenFileName(self, 'Open File')
         self.tl_parse_log(name)
-
 
 #    def write_telemtry(self, tex):
 #        """
