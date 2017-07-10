@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: latin-1 -*-
 
-#/*                          SERIAL COMMANDER
-#*                A simple serial interface to send commands
-#*
-#*      Copyright 2013, Carlos Gonzalez Cortes, carlgonz@ug.uchile.cl
-#*
-#* This program is free software: you can redistribute it and/or modify
-#* it under the terms of the GNU General Public License as published by
-#* the Free Software Foundation, either version 3 of the License, or
-#* (at your option) any later version.
-#*
-#* This program is distributed in the hope that it will be useful,
-#* but WITHOUT ANY WARRANTY; without even the implied warranty of
-#* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#* GNU General Public License for more details.
-#*
-#* You should have received a copy of the GNU General Public License
-#* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#*/
+"""
+                          SERIAL COMMANDER
+                A simple serial interface to send commands
+
+      Copyright 2013, Carlos Gonzalez Cortes, carlgonz@ug.uchile.cl
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 import sys
 import datetime
@@ -53,13 +54,13 @@ class SerialCommander(QtGui.QMainWindow):
     Main class, creates and configures main window. Also sets signals and
     slots.
     """
-    #Signals
+    # Signals
     _new_char = pyqtSignal(type(""))  # New char signal
     
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
 
-        #Instance variables
+        # Instance variables
         self.client = None
         self.alive = False
         self.receiver_thread = None
@@ -71,7 +72,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.put_timestamp = True
         self.mongo_client = MongoClient('localhost', 27017)
 
-        #Load config
+        # Load config
         try:
             config_file = open(config_path + "config.json", 'r')
             self.config = json.load(config_file)
@@ -79,7 +80,7 @@ class SerialCommander(QtGui.QMainWindow):
         except IOError:
             self.config = {}
 
-        #Load telecommands list
+        # Load telecommands list
         try:
             tc_set = set()  # Avoid duplicated items
             tc_file = open(config_path + "cmd_list.txt", 'r')
@@ -101,7 +102,7 @@ class SerialCommander(QtGui.QMainWindow):
 
         self.commands_list = self.config.get("commands", [])
 
-        #Set GUI
+        # Set GUI
         self.window = Ui_MainWindow()
         self.window.setupUi(self)
         self.setup_comm()
@@ -109,26 +110,25 @@ class SerialCommander(QtGui.QMainWindow):
         self.setup_actions()
         self.setup_telecommands()
         
-        #Set Telemetries to be stored
+        # Set Telemetries to be stored
         self.telemetries = []
         self.update_telemetry_array()
 
-        
     def setup_comm(self):
         """
         Sets connections combobox.
         """
-        #Connections
+        # Connections
         self.window.pushButtonOpenPort.clicked.connect(self.open_connection)
         self.window.pushButtonClosePort.clicked.connect(self.close_connection)
 
         self.window.tableWidgetTelemetry.itemClicked.connect(self.visualize)
 
-        #Hosts
+        # Hosts
         available_hosts = self.config.get("hosts", ["", ])
         self.window.lineEditURL.setText(available_hosts[0])
 
-        #Ports
+        # Ports
         available_ports_send = self.config.get("ports_send", ["", ])
         available_ports_send.reverse()
         self.window.comboBoxPortSend.addItems(available_ports_send)
@@ -140,17 +140,17 @@ class SerialCommander(QtGui.QMainWindow):
         """
         Config cmd send and selection window
         """
-        #Add command list
+        # Add command list
         self.window.listWidgetCommand.addItems(self.commands_list)
         
-        #Conexiones
+        # Connections
         self.window.listWidgetCommand.itemDoubleClicked.connect(self.command_clicked)
         self.window.pushButtonSend.clicked.connect(self.send_msg)
         self.window.checkBoxTimestamp.toggled.connect(self.timestamp_toggle)
     
     def setup_actions(self):
         """
-        Configura los menus de la barra de herramientas
+        Config toolbar menus
         """
         self.window.actionGuardar.triggered.connect(self.save_log)
         self.window.actionAgregar_comando.triggered.connect(self.add_cmd)
@@ -161,12 +161,12 @@ class SerialCommander(QtGui.QMainWindow):
         Configures telecommands tab
         """
 
-        #Fill telecommand list
+        # Fill telecommand list
         cmd_list = self.config.get("tc_list")
         if cmd_list:
             self.window.listWidget_cmd.addItems(cmd_list)
 
-        #Connections
+        # Connections
         self.window.lineEdit_tcfilter.textChanged.connect(self.tc_filter)
         self.window.listWidget_cmd.itemDoubleClicked.connect(self.tc_addtoframe)
         self.window.pushButton_tcclear.clicked.connect(self.tc_clearframe)
@@ -284,14 +284,13 @@ class SerialCommander(QtGui.QMainWindow):
 
     def timestamp_toggle(self, value):
         """
-        Slot que intercambia entre agregar o no la marca de tiempo
-        @deprecated
+        Slot to toggle timestamp in console text
         """
         self.timestamp = value
         
     def add_cmd(self):
         """
-        Edita la lista de comandos
+        Edit command list
         """
         dialog = EditCommandDialog(self,self.commands_list)
         self.commands_list = dialog.run_tool()
@@ -306,7 +305,7 @@ class SerialCommander(QtGui.QMainWindow):
         text = text.replace('\n', '')
         text = text.replace('\r', '')
         
-        #Separate msg fields. If fail, just copy the text
+        # Separate msg fields. If fail, just copy the text
         try:
             msg = json.loads(text)
             typ = msg.get("type", "other")
@@ -317,23 +316,23 @@ class SerialCommander(QtGui.QMainWindow):
             data = text
             log = "[{0}] {1}\n".format(typ, data)
         
-        #Moves cursor to end
+        # Moves cursor to end
         c = self.window.textEditTerminal.textCursor()
         c.movePosition(QTextCursor.End)
         self.window.textEditTerminal.setTextCursor(c)
         
         if self.timestamp:
-            #Add timestamp
+            # Add timestamp
             ts = datetime.datetime.now().isoformat(' ')
             log = '[{0}]{1}'.format(ts, log)
 
-        #Normal mode, just write text in terminal
+        # Normal mode, just write text in terminal
         self.window.textEditTerminal.insertPlainText(log)
         
         c.movePosition(QTextCursor.End)
         self.window.textEditTerminal.setTextCursor(c)
 
-        #Process special msgs
+        # Process special msgs
         if typ == "tm":
             self._process_tm(data)    
 
@@ -479,7 +478,7 @@ class SerialCommander(QtGui.QMainWindow):
                     
     def command_clicked(self, item):
         """
-        Mueve un comando de la lista, a la salida de texto
+        Move a command from the list to text entry
         """
         self.window.lineEditSend.setText(item.text())
         
@@ -518,9 +517,9 @@ class SerialCommander(QtGui.QMainWindow):
         Send written message to server
         """
         msg = str(self.window.lineEditSend.text())
-        self.addHistory(msg)
+        self.add_history(msg)
         
-        #Agregar LF y/o CR
+        # Add LF y/o CR
         if self.window.checkBoxLF.isChecked():
             msg += '\n'
         if self.window.checkBoxCR.isChecked():
@@ -542,10 +541,10 @@ class SerialCommander(QtGui.QMainWindow):
         m_write.setFormat("txt")
         m_write.write(document)
             
-    def addHistory(self, line):
+    def add_history(self, line):
         """
-        Agrega una nueva linea al historial. Elimina entradas antiguas si supera
-        cierta cantidad de mensajes.
+        Adds a new line to history. Deletes old entries if more than 100
+        messages exist.
         """
         if len(self.history) > 100:
             self.history.pop()
@@ -556,32 +555,31 @@ class SerialCommander(QtGui.QMainWindow):
         except:
             self.history.append(line)
             
-    def getHistory(self, index):
+    def get_history(self, index):
         """
-        Retorna el elemendo numero index del historial
+        Returns the history index entry
         """
-        if index > 0 and index <= len(self.history):
+        if 0 < index <= len(self.history):
             return self.history[-index]
         else:
             return ''
     
-    def historySend(self):
+    def history_send(self):
         """
-        Agrega una linea del historial para ser enviada
+        Add one line of the history to the send text entry
         """
         if self.history_cnt >= 0:
             if self.history_cnt > len(self.history):
                 self.history_cnt = len(self.history)
                 
-            text = self.getHistory(self.history_cnt)
+            text = self.get_history(self.history_cnt)
             self.window.lineEditSend.setText(text)
         else:
             self.history_cnt = 0                
             
     def closeEvent(self, event):
         """
-        Cierra la aplicacion correctamente. Cerrar los puertos, detener thread
-        y guardar la lista de comandos creada
+        Does a clean exit. Close ports, stop threads and save command list.
         """
         if self.alive:
             self.close_connection()
@@ -593,26 +591,26 @@ class SerialCommander(QtGui.QMainWindow):
         
     def keyPressEvent(self, event):
         """
-        Maneja eventos asociados a teclas presionadas
+        Manage key events
         """
         if event.key() == QtCore.Qt.Key_Up:
             if self.window.lineEditSend.hasFocus():
-                self.history_cnt+=1
-                self.historySend()
+                self.history_cnt += 1
+                self.history_send()
         
         if event.key() == QtCore.Qt.Key_Down:
             if self.window.lineEditSend.hasFocus():
-                self.history_cnt-=1
-                self.historySend()
+                self.history_cnt -= 1
+                self.history_send()
                 
-        #event for temelemetry simulation
+        # event for telemetry simulation
         if event.key() == QtCore.Qt.Key_T:
-           self.tc_test()
+            self.tc_test()
            
         event.accept()
         
-    ##########################################
-    ###########TEST FUNCTION##################          
+    # #########################################
+    # ########## TEST FUNCTION ################
     def tc_test(self):
         file = open(sys.argv[1]) 
         for line in file:
@@ -632,16 +630,16 @@ class SerialCommander(QtGui.QMainWindow):
                     self._process_tm(','.join(data))
         
         file.close()
-    ##########################################    
+    # #########################################
         
             
 class EditCommandDialog(QtGui.QDialog):
     """
-    Herramienta para edicion de comandos
+    Tool to edit command list
     """
-    def __init__(self,parent=None,cmd_list=[]):
+    def __init__(self, parent=None, cmd_list=()):
         
-        QtGui.QDialog.__init__(self,parent)
+        QtGui.QDialog.__init__(self, parent)
         
         self.ventana = Ui_DialogEditCommandList()
         self.ventana.setupUi(self)
@@ -649,18 +647,17 @@ class EditCommandDialog(QtGui.QDialog):
         self.cmd_list = cmd_list
         self.ventana.listWidgetCommand.addItems(self.cmd_list)
         
-        #Conexiones
+        # Connections
         self.ventana.pushButtonDelete.clicked.connect(self.delete_item)
         self.ventana.pushButtonAdd.clicked.connect(self.add_item)
         
     def run_tool(self):
         """
-        Abre el dialogo para que el usuario la lista. Al cerrar, recupera
-        los cambios y retorna la nueva lista
+        Opens dialog so user can add edit the list. Save changes and returns
+        the new list at close.
         """
         ret = super(EditCommandDialog, self).exec_()
-        9
-        if(ret):
+        if ret:
             self.cmd_list = []
             for row in range(self.ventana.listWidgetCommand.count()):
                 item = self.ventana.listWidgetCommand.item(row)
@@ -670,22 +667,20 @@ class EditCommandDialog(QtGui.QDialog):
     
     def delete_item(self):
         """
-        Borra los item seleccionados
+        Delete selected items
         """
         for item in self.ventana.listWidgetCommand.selectedItems():
             row = self.ventana.listWidgetCommand.row(item)
             witem = item = self.ventana.listWidgetCommand.takeItem(row)
             del witem
-            
-        
+
     def add_item(self):
         """
-        Agrega un nuevo item 
+        Adds new item
         """
         cmd = self.ventana.lineEditAdd.text()
-        item = self.ventana.listWidgetCommand.addItem(cmd)
+        self.ventana.listWidgetCommand.addItem(cmd)
         
-
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
