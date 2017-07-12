@@ -1,4 +1,6 @@
 import pymongo
+import numpy as np
+import pandas as pd
 from bson.objectid import ObjectId
 
 
@@ -22,34 +24,44 @@ class Telemetry(object):
         "sensTemp": 6,
         "gyro": 7,
         "expFis": 8,
-        "unknown": None
+        "unknown": -1
     }
 
-    payloadList = {
-        0: "tm_estado",
-        1: "battery",
-        2: "debug",
-        3: "lagmuirProbe",
-        4: "gps",
-        5: "camera",
-        6: "sensTemp",
-        7: "gyro",
-        8: "expFis",
-        None: "unknown"
+    dictPayloadName = {
+        0: "Status",
+        1: "Battery",
+        2: "Debug",
+        3: "LangmuirProbe",
+        4: "Gps",
+        5: "Camera",
+        6: "Temperature",
+        7: "Gyroscope",
+        8: "Physics",
+        -1: "Unknown"
+    }
+
+    dictPayStatus = {
+        0: "Inactive",
+        1: "Active",
+        2: "Init",
+        3: "Take",
+        4: "Stop",
+        5: "Waiting download"
     }
 
     # payloadList = list(dictPayload.keys())
     
     def __init__(self):
-        self.obj_id=None
+        self.obj_id = None
         self.date = None
         self.data = []
         self.n_data = 0
         self.last_frame = -1
-        self.lost_p= 0
+        self.lost_p = 0
         self.l_data = -1
         self.payload = None
         self.p_status = None
+        self._dataframe = None
 
         # state of the telemetry
         #    0 -> empty
@@ -60,6 +72,9 @@ class Telemetry(object):
 
     def get_state(self):
         return self.state
+
+    def get_state_name(self):
+        return self.dictState.get(self.state, "-")
     
     def set_state(self, st):
         self.state = st
@@ -77,7 +92,7 @@ class Telemetry(object):
         self.data = dat
         
     def set_data(self, dat, n_frame):
-        self.data = self.data +  dat
+        self.data = self.data + dat
         
         if int(n_frame, 16) != self.last_frame+1:
             # self.lost_p = self.lost_p  + (int(n_frame, 16) - self.last_frame+1) uncomment when bug has been fixed
@@ -97,14 +112,17 @@ class Telemetry(object):
     def get_l_data(self):
         return self.l_data
 
-    def set_doc_l_data(self, data):
-        self.l_data = data
-
     def set_l_data(self, l_data):
-        self.l_data = int(l_data, 16)
+        try:
+            self.l_data = int(l_data, 16)
+        except (ValueError, TypeError):
+            self.l_data = l_data
         
     def get_payload(self):
         return self.payload
+
+    def get_payload_name(self):
+        return self.dictPayloadName.get(self.payload, "Unknown")
 
     def get_payload_string(self):
         return self.dictPayload[self.payload]
@@ -119,19 +137,16 @@ class Telemetry(object):
         self.payload = int(pay, 16)
         
     def get_p_status(self):
-        return self.p_status
+        return self.dictPayStatus.get(self.p_status, self.p_status)
 
     def get_obj_id(self):
         return self.obj_id
     
     def set_p_status(self, p_status):
-        self.p_status = p_status
-
-    def set_last_frame(self, last_frame):
-        self.last_frame = last_frame
-
-    def get_last_frame(self):
-        return self.last_frame
+        try:
+            self.p_status = int(p_status, 16)
+        except (ValueError, TypeError):
+            self.p_status = p_status
 
     def set_n_data(self, n_data):
         self.n_data = n_data
@@ -147,13 +162,58 @@ class Telemetry(object):
                 "n_data": self.n_data,
                 "lost_p": self.lost_p,
                 "l_data": self.l_data,
-                "payload_status": self.p_status
+                "p_status": self.p_status
                 }
+
+    def to_datafarme(self):
+
+        if self.payload == self.dictPayload["gyro"]:
+            step = 5  # One sample every 5 values
+            maxl = (len(self.data) // step) * step  # Fix invalid len
+            data = np.array(self.data[0:maxl])
+            data = data.reshape((-1, step))
+            data = pd.DataFrame(data)
+            data.columns = ["time1", "time2", "X", "Y", "Z"]
+            self._dataframe = data
+
+        elif self.payload == self.dictPayload["sensTemp"]:
+            step = 6  # One sample every 5 values
+            maxl = (len(self.data) // step) * step  # Fix invalid len
+            data = np.array(self.data[0:maxl])
+            data = data.reshape((-1, step))
+            data = pd.DataFrame(data)
+            data.columns = ["time1", "time2", "Temp1", "Temp2", "Temp3", "Temp4"]
+            self._dataframe = data
+
+        elif self.payload == self.dictPayload["tm_estado"]:
+            step = 50+2  # One sample every 5 values
+            maxl = (len(self.data) // step) * step  # Fix invalid len
+            data = np.array(self.data[0:maxl])
+            data = data.reshape((-1, step))
+            data = pd.DataFrame(data.transpose())
+            data.insert(0, "Fields", self.statusList)
+            self._dataframe = data
+
+        else:
+            self._dataframe = pd.DataFrame(self.data)
+
+        return self._dataframe
+
+    def to_csv(self, fname):
+        if self._dataframe is None:
+            self.to_datafarme()
+
+        self._dataframe.to_csv(fname, index=False)
+
+    def to_string(self):
+        return self.to_datafarme().to_string()
 
     def save(self, client):
         if len(client.nodes) > 0:
             if self.n_data > 0:
-                _dict = self.__dict__
+                # TODO: Queremos esto, o queremos to_dict?
+                # _dict = self.__dict__
+                _dict = self.to_dict()
                 try:
                     self.insert_or_update(_dict, self.get_collection(client))
                 except pymongo.errors.DuplicateKeyError as e:
@@ -239,38 +299,9 @@ class Telemetry(object):
             if res is not None:
                 print("removed object")
 
-    def visualize(self):
-        if self.payloadList[self.payload] == "tm_estado":
-            csv_string = ""
-            dat= ''
-            for i in range(0, int((len(self.data)-1)/len(self.statusList))+1):
-                for j in range(0, len(self.statusList)):
-
-                    dat = "" if (len(self.statusList)*i + j) >= len(self.data) else self.data[len(self.statusList)*i + j]
-                    dat = str(int(dat, 16)) if dat != '' else dat
-
-                    if dat == str(65534):
-                        break
-                    line = self.statusList[j] + "\t" + dat + "\n"
-                    csv_string = csv_string + line
-
-                if dat == str(65534):
-                    break
-
-            return csv_string
-
-        elif self.payloadList[self.payload] == "gyro":
-            csv_string = 'time1' + '\t' + 'time2' + '\t' + 'X' + '\t' + 'Y' + '\t' + 'Z' + '\n'
-            for i in range(0, int(len(self.data)/5)):
-                init = i*5
-                line = str(int(self.data[init], 16)) + '\t' + str(int(self.data[init+1], 16)) + '\t' + str(int(self.data[init+2], 16)) + '\t' + str(int(self.data[init+3], 16)) + '\t' + str(int(self.data[init+4], 16)) + '\n'
-                csv_string = csv_string + line
-            return csv_string
-
-        else:
-            return str([int(d, 16) if d != '' else d for d in self.data])
-
     statusList = [
+        "Time1",
+        "Time2",
         "sta_RTC_isAlive",
         "sta_TRX_isAlive",
         "sta_EPS_isAlive",

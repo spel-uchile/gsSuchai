@@ -338,30 +338,28 @@ class SerialCommander(QtGui.QMainWindow):
             self._process_tm(data)    
 
     def _process_tm(self, data):
+        # TODO: Add time to TM
         ts = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
         data = data.split(',')
 
+        # 1. Parse frames
         # Header in all frames
         t_frame = data[0]  # type of frame
         n_frame = data[1]  # number of frame
 
-        # Header in all frames of type 0x100 or 0x400
-        t_data = data[2]  # type of telemetry payload (only if it is a frame of type 0x100 or 0x400)
+        # Header in all frames of type 0x1000 (Start) or 0x4000 (Simple)
+        t_data = data[2]  # Type of payload
 
-        # Header in payloads frames (not tm_estado) of type 0x100 or 0x400
-        l_data = data[3]  # length of data (only if it is a frame of type 0x100 or 0x400)
-        p_status = data[4]  # payload status (only if it is a frame of type 0x100 or 0x400)
+        # Header in payloads frames (not tm_estado) of type 0x1000 (Start)
+        l_data = data[3]    # length of data
+        p_status = data[4]  # payload status
 
-        _data = data[5:]  # data for frames 0x100 or 0x400 not estado
-        __data = [data[2], data[3], data[4]] + _data  # data for other frames not estado
+        # 2. Parse data
+        _data_start = data[5:]  # data in frames 0x1000 (Start) and 0x4000 (Simple)
+        _data_conti = data[2:]  # data in frames 0x3000 (Conti) and 0x2000 (End)
 
-        _data_estado = data[3:]  # data for frames 0x100 or 0x400 of type estado
-        __data_estado = [data[2]] + _data_estado  # data for other frames of type estado
-
-        line = "({4})[{0}][{1}]-[{2}] {3}".format(t_frame, n_frame, t_data, __data, ts)
-        #self.window.listWidgetTelemetry.addItem(line)
-
-        if t_frame == "0x0100" or t_frame == "0x0400":  # it is a new frame o 0x400
+        # 3. Build telemetry
+        if t_frame == "0x0100" or t_frame == "0x0400":  # it is a new frame o 0x4000
             # First check if the last telemetry is alright
             if len(self.telemetries) != 0:
                 # check if the last telemetry is finished
@@ -372,16 +370,32 @@ class SerialCommander(QtGui.QMainWindow):
             tel = Telemetry()
             tel.set_payload(t_data)
 
-            if tel.get_payload() != 0:  # Is not status telemetry
+            # Fix tm_estado simple vs tm_estado payload
+            # HACK: in tm_estado simple l_data=data[3] is the first data in the
+            # frame and can be only 0 or 1, but in tm_estado payload l_data is a
+            # big number > 1
+            is_simple_estado = tel.get_payload() == 0 and int(l_data, 16) <= 1
+
+            # Case simple tm_estado frame
+            if is_simple_estado:
+                tel.set_l_data("0x0001")
+                tel.set_p_status("0x0004")
+                # Fix tm_estado simple header to match payload format
+                # Add dummy [Time1,Time2]
+                tel.set_data(["0x0000", "0x0000"] + data[3:], n_frame)
+            # Case normal payload frame
+            else:
                 tel.set_l_data(l_data)
                 tel.set_p_status(p_status)
-                tel.set_data(_data, n_frame)
-            else:
-                tel.set_data(_data_estado, n_frame)
+                tel.set_data(_data_start, n_frame)
+
+            # Change status to received more frames
             if t_frame == "0x0400":
                 tel.set_state(2)  # Finished status
             else:
                 tel.set_state(1)  # Ongoing status
+
+            # Save current telemetry to DB
             self.telemetries.append(tel)
             tel.save(self.mongo_client)
             
@@ -397,10 +411,9 @@ class SerialCommander(QtGui.QMainWindow):
                     tel.set_state(3)
                 else:
                     tel.set_state(3)  # broken
-                if tel.get_payload() != 0 and tel.get_payload() is not None : # Is not estado telemetry
-                    tel.set_data(__data, n_frame)
-                else:
-                    tel.set_data(__data_estado, n_frame)
+
+                # Save data
+                tel.set_data(_data_conti, n_frame)
                 tel.save(self.mongo_client)
                 
         elif t_frame == "0x0300":  # it is an ongoing frame
@@ -408,17 +421,14 @@ class SerialCommander(QtGui.QMainWindow):
             if len(self.telemetries) != 0:  # it this is not true something is wrong
                 tel = self.telemetries[-1]
                 if tel.get_state() != 1:
-                    if tel.get_state() == 2: # last frame has finished
+                    if tel.get_state() == 2:  # last frame has finished
                         tel = Telemetry()
                         self.telemetries.append(tel)
                         tel.save(self.mongo_client)
                     tel.set_state(3)  # broken
 
-                if tel.get_payload() != 0 and tel.get_payload() is not None:  # Is not estado telemetry
-                    tel.set_data(__data, n_frame)
-                else:
-                    tel.set_data(__data_estado, n_frame)
-
+                # Save data
+                tel.set_data(_data_conti, n_frame)
                 tel.save(self.mongo_client)
         
         self.update_telemetry_table()
@@ -441,16 +451,14 @@ class SerialCommander(QtGui.QMainWindow):
 
     def document_to_telemetry(self, doc):
         tel = Telemetry()
-        tel.set_doc_data(doc["data"])
+        tel.set_state(doc['state'])
         tel.set_doc_payload(doc["payload"])
-        tel.set_doc_l_data(doc["l_data"])
-        tel.set_p_status(doc["p_status"])
-        tel.set_last_frame(doc["last_frame"])
+        tel.set_doc_data(doc["data"])
         tel.set_n_data(doc["n_data"])
         tel.set_lost_p(doc["lost_p"])
-        tel.set_p_status(doc['p_status'])
-        tel.set_state(doc['state'])
-        tel.set_date(doc['state'])
+        tel.set_l_data(doc["l_data"])
+        tel.set_p_status(doc["p_status"])
+        tel.set_date(doc['state'])  # TODO: Add date
         tel.set_obj_id(doc['_id'])
         return tel
 
@@ -458,24 +466,20 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.tableWidgetTelemetry.clearContents()
         
         for i in range(0, len(self.telemetries)):
+            tel = self.telemetries[i]
             self.window.tableWidgetTelemetry.removeRow(i)
             self.window.tableWidgetTelemetry.insertRow(i)
-            tel = self.telemetries[i]
-            self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(str(Telemetry.dictState[tel.get_state()])))
-            if tel.get_payload() is not None:
-                payload_string = str(Telemetry.payloadList[tel.get_payload()])
-            else:
-                payload_string = "unknown"
-            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(payload_string))
-            self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(str(tel.get_l_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(tel.get_state_name()))
+            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(tel.get_payload_name()))
+            self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(str(tel.get_n_data())))
             self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
-            self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(str(tel.get_n_data())))
-            self.window.tableWidgetTelemetry.setItem(i, 5, QtGui.QTableWidgetItem(str(tel.get_p_status())))
+            self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(tel.get_p_status()))
+            self.window.tableWidgetTelemetry.setItem(i, 5, QtGui.QTableWidgetItem(str(tel.get_l_data())))
             self.window.tableWidgetTelemetry.setItem(i, 6, QtGui.QTableWidgetItem(','.join(tel.get_data())))
             self.window.tableWidgetTelemetry.show()
 
     def visualize(self, item):
-        self.window.textEditTelemetry.setPlainText(self.telemetries[item.row()].visualize())
+        self.window.textEditTelemetry.setPlainText(self.telemetries[item.row()].to_string())
 
     def tl_save(self):
         for i in range(0, len(self.telemetries)):
@@ -495,11 +499,8 @@ class SerialCommander(QtGui.QMainWindow):
         indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
         index_set = set(indexes)
         selected_telemetries = [self.telemetries[ind] for ind in index_set]
-        name = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
-        file = open(name, 'w')
-        text = selected_telemetries[0].visualize()
-        file.write(text)
-        file.close()
+        name = QtGui.QFileDialog.getSaveFileName(self, "Save File", QDir.currentPath(), "CSV files (*.csv);;Text files (*.txt);;All files (*.*)")
+        text = selected_telemetries[0].to_csv(name)
 
     def tl_import(self):
         name = QtGui.QFileDialog.getOpenFileName(self, 'Open File')
@@ -648,7 +649,6 @@ class SerialCommander(QtGui.QMainWindow):
         file = open(log_path)
 
         for line in file:
-            print(line)
             if re.match(r'(.*)Prueba(.*?).*', line):
                 # print("Start Test")
                 continue
@@ -657,7 +657,8 @@ class SerialCommander(QtGui.QMainWindow):
                 print(line)
         
             elif len(line) != 0 and re.search(r'\[tm\].*', line) != None:
-                data = re.sub(r'\[.*\]\[tm\] ','',line).split(',')
+                print(line)
+                data = re.sub(r'\[.*\]\[tm\] ', '' , line).split(',')
                 # print(data)
                 if len(data) > 1:
                     # data[0] = data[0][5:]
