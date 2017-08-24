@@ -194,6 +194,16 @@ class Telemetry(object):
             data.insert(0, "Fields", self.statusList)
             self._dataframe = data
 
+        elif self.payload == self.dictPayload["gps"]:
+            """
+            GPS data are string lines including \r\n example:
+            $GNRMC,000000.00,V,,,,,,,,,,N*63\r\n$GNRMC,000000.00,V,,,,,,,,,,N*63
+            So it is easy join samples as string and split in lines
+            """
+            data = [chr(int(x, 16)) for x in self.data]  # Convert to string
+            data = "".join(data).splitlines()  # Split in a list of lines
+            self._dataframe = pd.DataFrame(data)  # Dataframe of strings
+
         else:
             self._dataframe = pd.DataFrame(self.data)
 
