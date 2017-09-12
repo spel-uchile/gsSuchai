@@ -196,7 +196,9 @@ CSP_DEFINE_TASK(task_client)
         message = s_recv(receiver);   
         if(!message) continue;
         
-        printf("[Client] Received message: %s\n", message);
+        snprintf(dbg_str, 1023, "[Client] Received message: %s\n", message);
+        printf(dbg_str);
+        s_send(publisher, dbg_str);
         
         root = json_loads(message, 0, &error);
         if(!root) continue;
