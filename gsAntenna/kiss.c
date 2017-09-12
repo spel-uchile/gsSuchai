@@ -412,6 +412,7 @@ int main(int argc, char **argv) {
     csp_route_set(R_ADDRESS_TNC, &csp_if_kiss, CSP_NODE_MAC);
     csp_route_set(D_ADDRESS, &csp_if_kiss, CSP_NODE_MAC);
     csp_route_set(R_ADDRESS_TRX, &csp_if_kiss, CSP_NODE_MAC);
+    csp_route_set(R_ADDRESS_EPS, &csp_if_kiss, CSP_NODE_MAC);
 
     csp_route_start_task(0, 0);
 
