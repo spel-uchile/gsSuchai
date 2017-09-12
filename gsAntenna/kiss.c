@@ -25,8 +25,9 @@
 #define D_ADDRESS 0		//pic node
 #define R_ADDRESS_TNC  9	//tnc node (router)
 #define R_ADDRESS_TRX  5	//trx node (router)
-#define R_ADDRESS_OBC  0	//tnc node (router)
-#define R_ADDRESS_GND 10	//trx node (router)
+#define R_ADDRESS_EPS  2        //eps node
+#define R_ADDRESS_OBC  0	//obc node 
+#define R_ADDRESS_GND 10	//gnd node
 
 #define SERVER_TIDX 0
 #define CLIENT_TIDX 1
@@ -326,6 +327,8 @@ CSP_DEFINE_TASK(task_client)
                         ivalue = R_ADDRESS_TNC;
                     else if(strcmp(dest, "gnd") == 0)
                         ivalue = R_ADDRESS_GND;
+                    else if(strcmp(dest, "eps") == 0)
+                        ivalue = R_ADDRESS_EPS;
                     else
                         ivalue = 0xFF;
                     
