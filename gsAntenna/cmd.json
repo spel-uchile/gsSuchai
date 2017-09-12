@@ -11,8 +11,9 @@
     "{\"type\": \"tnc\", \"data\": {\"set_preamble\": 256}}",
     "{\"type\": \"tnc\", \"data\": {\"get_config\": 12}}",
     "{\"type\": \"tnc\", \"data\": {\"get_status\": 12}}",
-    "{\"type\": \"tnc\", \"data\": {\"ping\": \"obc\"}}"
-    "{\"type\": \"tnc\", \"data\": {\"ping\": \"trx\"}}"
-    "{\"type\": \"tnc\", \"data\": {\"ping\": \"tnc\"}}"
+    "{\"type\": \"tnc\", \"data\": {\"ping\": \"obc\"}}",
+    "{\"type\": \"tnc\", \"data\": {\"ping\": \"trx\"}}",
+    "{\"type\": \"tnc\", \"data\": {\"ping\": \"eps\"}}",
+    "{\"type\": \"tnc\", \"data\": {\"ping\": \"tnc\"}}",
     "{\"type\": \"tnc\", \"data\": {\"ping\": \"gnd\"}}"
 ]
