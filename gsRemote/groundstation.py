@@ -340,6 +340,12 @@ class SerialCommander(QtGui.QMainWindow):
     def _process_tm(self, data):
         # TODO: Add time to TM
         ts = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
+        # Fix data ending with commands (Issue #4)
+        # This fix was added for compatibily with versions < 0.4.6 and can
+        # be removed in the future
+        if(data[-1] == ","):
+            data = data[:-1]
+        # Split comma separated values
         data = data.split(',')
 
         # 1. Parse frames

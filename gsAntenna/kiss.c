@@ -104,11 +104,15 @@ CSP_DEFINE_TASK(task_server)
                     printf("task_server: Received CSP packet in address %d (len = %d)\n", D_ADDRESS, packet->length);
                     
                     char tmp[10];
-                    for(i=0; i<packet->length/2; i++)
+                    // Parse packet as comma separated values in hex format
+                    for(i=0; i<(packet->length/2)-1; i++)
                     {
                         sprintf(tmp, "0x%04X,", packet->data16[i]);
                         strcat(buffer, tmp);
                     }
+                    // Parse the last value without a comma (Issue #4)
+                    sprintf(tmp, "0x%04X", packet->data16[i]);
+                    strcat(buffer, tmp);
                     
                     json_t *j_msg = json_pack("{s:s, s:s}",
                                             "type", "tm",
