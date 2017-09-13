@@ -21,6 +21,8 @@
 #define DPORT 11		//Debug port
 #define CPORT 12                //Commands port
 
+#define PORT_EPS_RESET  20      //Port to hard reset EPS
+
 #define S_ADDRESS 10		//source
 #define D_ADDRESS 0		//pic node
 #define R_ADDRESS_TNC  9	//tnc node (router)
@@ -41,6 +43,8 @@ const char *type_tc = "tc";      //Message is telecomand
 const char *type_db = "debug";   //Message is debug telecomand
 const char *type_tnc = "tnc";    //Message is a tnc command
 const char *type_trx = "trx";    //Message is a trx command
+const char *type_eps = "eps";    //Message is a trx command
+
 
 const char *dest_obc = "obc";    //Message is telecomand
 const char *dest_trx = "trx";    //Message is debug telecomand
@@ -244,6 +248,17 @@ CSP_DEFINE_TASK(task_client)
             int len = strlen(data_buff);
             
             csp_transaction(0, D_ADDRESS, DPORT, csp_timeout, data_buff, len, NULL, 0);
+        }
+        //EPS commands
+        else if(strcmp(json_string_value(type), type_eps) == 0)
+        {
+            data = json_object_get(root, "data");
+            char *eps_cmd = json_string_value(data);
+            int len = strlen(eps_cmd);
+            if(strcmp(eps_cmd, "hard_reset") == 0)
+            {
+                csp_transaction(0, R_ADDRESS_EPS, PORT_EPS_RESET, csp_timeout, NULL, 0, NULL, 0);
+            }
         }
         //TNC commands
         else if(strcmp(json_string_value(type), type_tnc) == 0)
