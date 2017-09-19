@@ -192,15 +192,22 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data.transpose())
             data.insert(0, "Fields", self.statusList)
+            try:
+                data[0] = data[0].apply(lambda x: int(x, 16))
+            except KeyError:
+                pass
+
             self._dataframe = data
 
         elif self.payload == self.dictPayload["battery"]:
+            hex2int = lambda x: int(x, 16)
             step = 7  # One sample every 5 values
             maxl = (len(self.data) // step) * step  # Fix invalid len
             data = np.array(self.data[0:maxl])
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "Voltage", "I in", "I out", "Temp 1", "Temp 2"]
+            # data[["Voltage", "I in"]] = data[["Voltage", "I in"]].apply(hex2int)
             self._dataframe = data
 
         elif self.payload == self.dictPayload["gps"]:
