@@ -2,10 +2,11 @@
 # -*- coding: latin-1 -*-
 
 """
-                          SERIAL COMMANDER
-                A simple serial interface to send commands
+                        SUCHAI Ground Station Software
+            A remote interface to send commands and receive telemetry
 
-      Copyright 2013, Carlos Gonzalez Cortes, carlgonz@ug.uchile.cl
+      Copyright 2017, Carlos Gonzalez Cortes, carlgonz@uchile.cl
+      Copyright 2017, Camilo Rojas Milla, camrojas@uchile.cl
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -343,7 +344,7 @@ class SerialCommander(QtGui.QMainWindow):
         # Fix data ending with commands (Issue #4)
         # This fix was added for compatibily with versions < 0.4.6 and can
         # be removed in the future
-        if(data[-1] == ","):
+        if data[-1] == "," or data[-1] == "\n":
             data = data[:-1]
         # Split comma separated values
         data = data.split(',')

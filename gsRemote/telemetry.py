@@ -186,7 +186,7 @@ class Telemetry(object):
             self._dataframe = data
 
         elif self.payload == self.dictPayload["tm_estado"]:
-            step = 50+2  # One sample every 5 values
+            step = 50+2  # One sample every 50 values
             maxl = (len(self.data) // step) * step  # Fix invalid len
             data = np.array(self.data[0:maxl])
             data = data.reshape((-1, step))
@@ -194,11 +194,20 @@ class Telemetry(object):
             data.insert(0, "Fields", self.statusList)
             self._dataframe = data
 
+        elif self.payload == self.dictPayload["battery"]:
+            step = 7  # One sample every 5 values
+            maxl = (len(self.data) // step) * step  # Fix invalid len
+            data = np.array(self.data[0:maxl])
+            data = data.reshape((-1, step))
+            data = pd.DataFrame(data)
+            data.columns = ["time1", "time2", "Voltage", "I in", "I out", "Temp 1", "Temp 2"]
+            self._dataframe = data
+
         elif self.payload == self.dictPayload["gps"]:
             """
             GPS data are string lines including \r\n example:
             $GNRMC,000000.00,V,,,,,,,,,,N*63\r\n$GNRMC,000000.00,V,,,,,,,,,,N*63
-            So it is easy join samples as string and split in lines
+            So it is easy to join samples as string and split in lines
             """
             data = [chr(int(x, 16)) for x in self.data]  # Convert to string
             data = "".join(data).splitlines()  # Split in a list of lines
