@@ -494,14 +494,24 @@ class SerialCommander(QtGui.QMainWindow):
             self.telemetries[i].save(self.mongo_client)
 
     def tl_delete(self):
-        indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
-        index_set = set(indexes)
-
-        deleted_telemetries = [self.telemetries[ind] for ind in index_set]
-        for i in range(0, len(deleted_telemetries)):
-            deleted_telemetries[i].delete(self.mongo_client)
-            self.telemetries.remove(deleted_telemetries[i])
-        self.update_telemetry_table()
+        # Show a confirmation message
+        ret = QtGui.QMessageBox.warning(self, "Warning",
+                                        "Do you really want to delete the entry?\n"
+                                        "This action cannot be undone.",
+                                        QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok,
+                                        QtGui.QMessageBox.Cancel)
+        # Do nothing if user cancels
+        if ret == QtGui.QMessageBox.Cancel:
+            return
+        # Actually remove the element
+        else:
+            indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
+            index_set = set(indexes)
+            deleted_telemetries = [self.telemetries[ind] for ind in index_set]
+            for i in range(0, len(deleted_telemetries)):
+                deleted_telemetries[i].delete(self.mongo_client)
+                self.telemetries.remove(deleted_telemetries[i])
+            self.update_telemetry_table()
 
     def tl_csv(self):
         indexes = [item.row() for item in self.window.tableWidgetTelemetry.selectedItems()]
