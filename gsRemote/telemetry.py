@@ -51,9 +51,9 @@ class Telemetry(object):
 
     # payloadList = list(dictPayload.keys())
     
-    def __init__(self):
+    def __init__(self, date=None):
         self.obj_id = None
-        self.date = None
+        self.date = date
         self.data = []
         self.n_data = 0
         self.last_frame = -1
@@ -81,6 +81,9 @@ class Telemetry(object):
 
     def set_date(self, date):
         self.date = date
+
+    def get_date(self):
+        return self.date
 
     def set_obj_id(self, id):
         self.obj_id = id
@@ -162,7 +165,8 @@ class Telemetry(object):
                 "n_data": self.n_data,
                 "lost_p": self.lost_p,
                 "l_data": self.l_data,
-                "p_status": self.p_status
+                "p_status": self.p_status,
+                "date": self.date
                 }
 
     def to_datafarme(self):

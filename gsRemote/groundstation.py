@@ -27,7 +27,6 @@ import datetime
 import json
 import re
 import os
-
 from pymongo import MongoClient
 
 from PyQt4.Qt import *
@@ -57,7 +56,7 @@ class SerialCommander(QtGui.QMainWindow):
     """
     # Signals
     _new_char = pyqtSignal(type(""))  # New char signal
-    
+
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
 
@@ -92,7 +91,7 @@ class SerialCommander(QtGui.QMainWindow):
                 tc_set.add(line)
 
             tc_file.close()
-            
+
             tc_list = list(tc_set)
             tc_list.sort()
             self.config["tc_list"] = tc_list
@@ -110,7 +109,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.setup_send()
         self.setup_actions()
         self.setup_telecommands()
-        
+
         # Set Telemetries to be stored
         self.telemetries = []
         self.update_telemetry_array()
@@ -143,12 +142,12 @@ class SerialCommander(QtGui.QMainWindow):
         """
         # Add command list
         self.window.listWidgetCommand.addItems(self.commands_list)
-        
+
         # Connections
         self.window.listWidgetCommand.itemDoubleClicked.connect(self.command_clicked)
         self.window.pushButtonSend.clicked.connect(self.send_msg)
         self.window.checkBoxTimestamp.toggled.connect(self.timestamp_toggle)
-    
+
     def setup_actions(self):
         """
         Config toolbar menus
@@ -231,14 +230,14 @@ class SerialCommander(QtGui.QMainWindow):
             item = self.window.tableWidget_tcframe.item(i, 2)
             value = int(str(item.text()), 10)
             tc_frame.append(value)
-            
+
             item = self.window.tableWidget_tcframe.item(i, 0)
             name = str(item.text())
-            
+
             # Add command line to hist
             cmd_par = (name, tc, value)
             tmp_tc_frame.append(cmd_par)
-        
+
         # Send frame to history
         self.tc_add_hist(tmp_tc_frame)
 
@@ -250,14 +249,14 @@ class SerialCommander(QtGui.QMainWindow):
 
         tc_msj = json.dumps(tc_json)
         self.client.send(tc_msj)
-        
+
     def tc_delete(self):
         """
         Delete selected TC row
         """
         item = self.window.tableWidget_tcframe.currentRow()
         self.window.tableWidget_tcframe.removeRow(item)
-    
+
     def tc_add_hist(self, frame):
         """
         Add TC frame to history
@@ -265,14 +264,14 @@ class SerialCommander(QtGui.QMainWindow):
         ts = datetime.datetime.now().isoformat(' ')
         self.tc_history[ts] = frame
         self.window.comboBox_tchistory.addItem(ts)
-        
+
     def tc_load_hist(self, item):
         """        Load selected frame from history to table
         """
         ts = self.window.comboBox_tchistory.currentText()
         frame = self.tc_history[ts]
         self.tc_clearframe(None)
-        
+
         for row in frame:
             item_name = QTableWidgetItem(str(row[0]))
             item_cmd = QTableWidgetItem(hex(row[1]))
@@ -289,24 +288,24 @@ class SerialCommander(QtGui.QMainWindow):
         Slot to toggle timestamp in console text
         """
         self.timestamp = value
-        
+
     def add_cmd(self):
         """
         Edit command list
         """
         dialog = EditCommandDialog(self,self.commands_list)
         self.commands_list = dialog.run_tool()
-        
+
         self.window.listWidgetCommand.clear()
         self.window.listWidgetCommand.addItems(self.commands_list)
-    
+
     def write_terminal(self, text):
         """
         Log received msg to terminal
         """
         text = text.replace('\n', '')
         text = text.replace('\r', '')
-        
+
         # Separate msg fields. If fail, just copy the text
         try:
             msg = json.loads(text)
@@ -317,12 +316,12 @@ class SerialCommander(QtGui.QMainWindow):
             typ = "debug"
             data = text
             log = "[{0}] {1}\n".format(typ, data)
-        
+
         # Moves cursor to end
         c = self.window.textEditTerminal.textCursor()
         c.movePosition(QTextCursor.End)
         self.window.textEditTerminal.setTextCursor(c)
-        
+
         if self.timestamp:
             # Add timestamp
             ts = datetime.datetime.now().isoformat(' ')
@@ -330,17 +329,16 @@ class SerialCommander(QtGui.QMainWindow):
 
         # Normal mode, just write text in terminal
         self.window.textEditTerminal.insertPlainText(log)
-        
+
         c.movePosition(QTextCursor.End)
         self.window.textEditTerminal.setTextCursor(c)
 
         # Process special msgs
         if typ == "tm":
-            self._process_tm(data)    
+            self._process_tm(data)
 
     def _process_tm(self, data):
-        # TODO: Add time to TM
-        ts = datetime.datetime.now().strftime("%y-%m-%d %H:%M:%S")
+        ts = datetime.datetime.now(datetime.timezone.utc).strftime("%y-%m-%d %H:%M:%S")
         # Fix data ending with commands (Issue #4)
         # This fix was added for compatibily with versions < 0.4.6 and can
         # be removed in the future
@@ -374,7 +372,7 @@ class SerialCommander(QtGui.QMainWindow):
                     self.telemetries[-1].set_state(3)  # broken
 
             # Append a new telemetry
-            tel = Telemetry()
+            tel = Telemetry(date=ts)
             tel.set_payload(t_data)
 
             # Fix tm_estado simple vs tm_estado payload
@@ -405,14 +403,14 @@ class SerialCommander(QtGui.QMainWindow):
             # Save current telemetry to DB
             self.telemetries.append(tel)
             tel.save(self.mongo_client)
-            
+
         elif t_frame == "0x0200":  # it is an ending frame
             if len(self.telemetries) != 0:  # if this is not true something is wrong
                 tel = self.telemetries[-1]
                 if tel.get_state() == 1:  # if the last frame is in progress
                     tel.set_state(2)  # finished
                 elif tel.get_state() == 2:  # if the last frame is finished
-                    tel = Telemetry()
+                    tel = Telemetry(date=ts)
                     self.telemetries.append(tel)
                     tel.save(self.mongo_client)
                     tel.set_state(3)
@@ -422,14 +420,14 @@ class SerialCommander(QtGui.QMainWindow):
                 # Save data
                 tel.set_data(_data_conti, n_frame)
                 tel.save(self.mongo_client)
-                
+
         elif t_frame == "0x0300":  # it is an ongoing frame
 
             if len(self.telemetries) != 0:  # it this is not true something is wrong
                 tel = self.telemetries[-1]
                 if tel.get_state() != 1:
                     if tel.get_state() == 2:  # last frame has finished
-                        tel = Telemetry()
+                        tel = Telemetry(date=ts)
                         self.telemetries.append(tel)
                         tel.save(self.mongo_client)
                     tel.set_state(3)  # broken
@@ -437,7 +435,7 @@ class SerialCommander(QtGui.QMainWindow):
                 # Save data
                 tel.set_data(_data_conti, n_frame)
                 tel.save(self.mongo_client)
-        
+
         self.update_telemetry_table()
 
     def update_telemetry_array(self):
@@ -465,25 +463,28 @@ class SerialCommander(QtGui.QMainWindow):
         tel.set_lost_p(doc["lost_p"])
         tel.set_l_data(doc["l_data"])
         tel.set_p_status(doc["p_status"])
-        tel.set_date(doc['state'])  # TODO: Add date
         tel.set_obj_id(doc['_id'])
+        id_timestamp = doc["_id"].generation_time.strftime("%y-%m-%d %H:%M:%S")
+        tel.set_date(doc.get("date", id_timestamp))  # Compatible with < 0.4.6
         return tel
 
     def update_telemetry_table(self):
         self.window.tableWidgetTelemetry.clearContents()
-        
+
         for i in range(0, len(self.telemetries)):
             tel = self.telemetries[i]
             self.window.tableWidgetTelemetry.removeRow(i)
             self.window.tableWidgetTelemetry.insertRow(i)
-            self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(tel.get_state_name()))
-            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(tel.get_payload_name()))
-            self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(str(tel.get_n_data())))
-            self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
-            self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(tel.get_p_status()))
-            self.window.tableWidgetTelemetry.setItem(i, 5, QtGui.QTableWidgetItem(str(tel.get_l_data())))
-            self.window.tableWidgetTelemetry.setItem(i, 6, QtGui.QTableWidgetItem(','.join(tel.get_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 0, QtGui.QTableWidgetItem(tel.get_date()))
+            self.window.tableWidgetTelemetry.setItem(i, 1, QtGui.QTableWidgetItem(tel.get_state_name()))
+            self.window.tableWidgetTelemetry.setItem(i, 2, QtGui.QTableWidgetItem(tel.get_payload_name()))
+            self.window.tableWidgetTelemetry.setItem(i, 3, QtGui.QTableWidgetItem(str(tel.get_n_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 4, QtGui.QTableWidgetItem(str(tel.get_lost_p())))
+            self.window.tableWidgetTelemetry.setItem(i, 5, QtGui.QTableWidgetItem(tel.get_p_status()))
+            self.window.tableWidgetTelemetry.setItem(i, 6, QtGui.QTableWidgetItem(str(tel.get_l_data())))
+            self.window.tableWidgetTelemetry.setItem(i, 7, QtGui.QTableWidgetItem(','.join(tel.get_data())))
             self.window.tableWidgetTelemetry.show()
+            self.window.tableWidgetTelemetry.resizeColumnToContents(0)
 
     def visualize(self, item):
         self.window.textEditTelemetry.setPlainText(self.telemetries[item.row()].to_string())
@@ -518,13 +519,13 @@ class SerialCommander(QtGui.QMainWindow):
 #        Add new telemetry to list
 #        """
 #        self.winldow.listWidgetTelemetry.addItem(tex)
-                    
+
     def command_clicked(self, item):
         """
         Move a command from the list to text entry
         """
         self.window.lineEditSend.setText(item.text())
-        
+
     def open_connection(self):
         """
         Opens connection with server indicated in GUI
@@ -544,7 +545,7 @@ class SerialCommander(QtGui.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, 'Error', 'Error al abrir el puerto serial\n'+str(e))
             self.close_connection()
-        
+
     def close_connection(self):
         """
         Close connections
@@ -561,17 +562,17 @@ class SerialCommander(QtGui.QMainWindow):
         """
         msg = str(self.window.lineEditSend.text())
         self.add_history(msg)
-        
+
         # Add LF y/o CR
         if self.window.checkBoxLF.isChecked():
             msg += '\n'
         if self.window.checkBoxCR.isChecked():
             msg += '\r'
-        
+
         self.client.send(msg)
         self.window.lineEditSend.clear()
         self.history_cnt = 0
-        
+
     def save_log(self):
         """
         Saves terminal content to file
@@ -583,7 +584,7 @@ class SerialCommander(QtGui.QMainWindow):
         m_write.setFileName(doc_file)
         m_write.setFormat("txt")
         m_write.write(document)
-            
+
     def add_history(self, line):
         """
         Adds a new line to history. Deletes old entries if more than 100
@@ -591,13 +592,13 @@ class SerialCommander(QtGui.QMainWindow):
         """
         if len(self.history) > 100:
             self.history.pop()
-        
+
         try:
             if not (line == self.history[-1]):
                 self.history.append(line)
         except:
             self.history.append(line)
-            
+
     def get_history(self, index):
         """
         Returns the history index entry
@@ -606,7 +607,7 @@ class SerialCommander(QtGui.QMainWindow):
             return self.history[-index]
         else:
             return ''
-    
+
     def history_send(self):
         """
         Add one line of the history to the send text entry
@@ -614,12 +615,12 @@ class SerialCommander(QtGui.QMainWindow):
         if self.history_cnt >= 0:
             if self.history_cnt > len(self.history):
                 self.history_cnt = len(self.history)
-                
+
             text = self.get_history(self.history_cnt)
             self.window.lineEditSend.setText(text)
         else:
-            self.history_cnt = 0                
-            
+            self.history_cnt = 0
+
     def closeEvent(self, event):
         """
         Does a clean exit. Close ports, stop threads and save command list.
@@ -631,7 +632,7 @@ class SerialCommander(QtGui.QMainWindow):
         #     file_cmd.write(line+'\n')
         # file_cmd.close()
         event.accept()
-        
+
     def keyPressEvent(self, event):
         """
         Manage key events
@@ -640,12 +641,12 @@ class SerialCommander(QtGui.QMainWindow):
             if self.window.lineEditSend.hasFocus():
                 self.history_cnt += 1
                 self.history_send()
-        
+
         if event.key() == QtCore.Qt.Key_Down:
             if self.window.lineEditSend.hasFocus():
                 self.history_cnt -= 1
                 self.history_send()
-                
+
         # event for telemetry simulation
         if event.key() == QtCore.Qt.Key_T:
            self.tl_parse_log(sys.argv[1])
@@ -659,10 +660,10 @@ class SerialCommander(QtGui.QMainWindow):
             if re.match(r'(.*)Prueba(.*?).*', line):
                 # print("Start Test")
                 continue
-    
+
             elif re.match(r'(.*)exe_cmd(.*?).*', line):
                 print(line)
-        
+
             elif len(line) != 0 and re.search(r'\[tm\].*', line) != None:
                 print(line)
                 data = re.sub(r'\[.*\]\[tm\] ', '' , line).split(',')
@@ -673,28 +674,28 @@ class SerialCommander(QtGui.QMainWindow):
                         del data[-1]
                     print(data)
                     self._process_tm(','.join(data))
-        
+
         file.close()
-        
-            
+
+
 class EditCommandDialog(QtGui.QDialog):
     """
     Tool to edit command list
     """
     def __init__(self, parent=None, cmd_list=()):
-        
+
         QtGui.QDialog.__init__(self, parent)
-        
+
         self.ventana = Ui_DialogEditCommandList()
         self.ventana.setupUi(self)
-        
+
         self.cmd_list = cmd_list
         self.ventana.listWidgetCommand.addItems(self.cmd_list)
-        
+
         # Connections
         self.ventana.pushButtonDelete.clicked.connect(self.delete_item)
         self.ventana.pushButtonAdd.clicked.connect(self.add_item)
-        
+
     def run_tool(self):
         """
         Opens dialog so user can add edit the list. Save changes and returns
@@ -706,9 +707,9 @@ class EditCommandDialog(QtGui.QDialog):
             for row in range(self.ventana.listWidgetCommand.count()):
                 item = self.ventana.listWidgetCommand.item(row)
                 self.cmd_list.append(item.text())
-         
+
         return self.cmd_list
-    
+
     def delete_item(self):
         """
         Delete selected items
@@ -724,7 +725,7 @@ class EditCommandDialog(QtGui.QDialog):
         """
         cmd = self.ventana.lineEditAdd.text()
         self.ventana.listWidgetCommand.addItem(cmd)
-        
+
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
