@@ -2,11 +2,11 @@ from distutils.core import setup
 
 setup(
     name='groundstation',
-    version='0.4.6',
+    version='0.4.7',
     url='https://github.com/carlgonz/SerialCommander',
     license='GPL v3',
     author='Carlos Gonzalez',
-    author_email='contacto.carlosgonzalezqgmail.com',
+    author_email='carlgonz@uchile.cl',
     description='A simple serial interface to send commands',
 
     packages=['forms'],

@@ -87,6 +87,9 @@ class Telemetry(object):
 
     def set_obj_id(self, id):
         self.obj_id = id
+
+    def get_obj_id(self):
+        return str(self.obj_id)
     
     def get_data(self):
         return self.data
@@ -141,9 +144,6 @@ class Telemetry(object):
         
     def get_p_status(self):
         return self.dictPayStatus.get(self.p_status, self.p_status)
-
-    def get_obj_id(self):
-        return self.obj_id
     
     def set_p_status(self, p_status):
         try:
@@ -241,8 +241,6 @@ class Telemetry(object):
     def save(self, client):
         if len(client.nodes) > 0:
             if self.n_data > 0:
-                # TODO: Queremos esto, o queremos to_dict?
-                # _dict = self.__dict__
                 _dict = self.to_dict()
                 try:
                     self.insert_or_update(_dict, self.get_collection(client))
