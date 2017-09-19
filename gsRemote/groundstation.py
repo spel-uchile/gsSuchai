@@ -442,17 +442,17 @@ class SerialCommander(QtGui.QMainWindow):
         elif t_frame == "0x0300":  # it is an ongoing frame
             if len(self.telemetries) != 0:  # if this is not true something is wrong
                 key, tel = self.telemetries.popitem()
-                if tel.get_state() in (1, 3): # In progress or broken
+                if tel.get_state() in (1, 3):  # In progress or broken
                     tel.set_data(_data_conti, n_frame)  # Update
                     tel.save(self.mongo_client)  # Save
-                    self.telemetries[tel.get_obj_id()] = tel  # Return to list
+                    self.telemetries[key] = tel  # Return to list
 
                 else:  # tel.get_state() == 2:  # last frame has finished
-                        tel = Telemetry(date=ts)  # New
-                        tel.set_data(_data_conti, n_frame)  # Update
-                        tel.set_state(3)  # Mark as broken
-                        tel.save(self.mongo_client)  # Save
-                        self.telemetries[tel.get_obj_id()] = tel  # Add to list
+                    tel = Telemetry(date=ts)  # New
+                    tel.set_data(_data_conti, n_frame)  # Update
+                    tel.set_state(3)  # Mark as broken
+                    tel.save(self.mongo_client)  # Save
+                    self.telemetries[tel.get_obj_id()] = tel  # Add to list
 
         self.update_telemetry_table()
 
