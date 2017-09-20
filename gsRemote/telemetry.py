@@ -197,9 +197,12 @@ class Telemetry(object):
             data = pd.DataFrame(data.transpose())
             data.insert(0, "Fields", self.statusList)
             try:
-                data[0] = data[0].apply(lambda x: int(x, 16))
+                for i in data.columns[1:]:
+                    data[i] = data[i].apply(lambda x: int(x, 16))
             except KeyError:
                 pass
+            except Exception as e:
+                print(e)
 
             self._dataframe = data
 
