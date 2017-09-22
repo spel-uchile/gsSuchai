@@ -214,7 +214,14 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "Voltage", "I in", "I out", "Temp 1", "Temp 2"]
-            # data[["Voltage", "I in"]] = data[["Voltage", "I in"]].apply(hex2int)
+            try:
+                for i in data.columns[2:]:
+                    data[i] = data[i].apply(lambda x: int(x, 16))
+            except KeyError:
+                pass
+            except Exception as e:
+                print(e)
+
             self._dataframe = data
 
         elif self.payload == self.dictPayload["gps"]:
