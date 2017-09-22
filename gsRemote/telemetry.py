@@ -234,6 +234,16 @@ class Telemetry(object):
             data = "".join(data).splitlines()  # Split in a list of lines
             self._dataframe = pd.DataFrame(data)  # Dataframe of strings
 
+        elif self.payload == self.dictPayload["expFis"]:
+            data = pd.DataFrame(self.data)
+            try:
+                data[0] = data[0].apply(lambda x: int(x, 16))
+            except KeyError:
+                pass
+            except Exception as e:
+                print(e)
+            self._dataframe = data
+
         else:
             self._dataframe = pd.DataFrame(self.data)
 
