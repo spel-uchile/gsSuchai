@@ -43,12 +43,19 @@ from telemetry import Telemetry
 
 
 config_path = "/usr/share/groundstation/"
+local_config_path = os.path.expanduser("~/.config/groundstation")
 if not os.path.exists(config_path):
     config_path = "/usr/local/share/groundstation/"
     if not os.path.exists(config_path):
         config_path = "config/"
     else:
         print("Warning: no application path found")
+
+if not os.path.exists(local_config_path):
+    import shutil
+    print("No local config path. Creating")
+    os.mkdir(local_config_path)
+    shutil.copy(os.path.join(config_path, "config.json"), local_config_path)
 
 
 class SerialCommander(QtGui.QMainWindow):
@@ -72,11 +79,19 @@ class SerialCommander(QtGui.QMainWindow):
         self.tc_history_cnt = 0
         self.timestamp = False
         self.put_timestamp = True
-        self.mongo_client = MongoClient('localhost', 27017)
+
+        # Load version
+        self.version = "0.0.0"
+        try:
+            with open(os.path.join(config_path, "version.txt")) as ver_file:
+                self. version = ver_file.readline()
+        except IOError:
+            print("Version file not found")
+            pass
 
         # Load config
         try:
-            config_file = open(config_path + "config.json", 'r')
+            config_file = open(os.path.join(local_config_path, "config.json"), 'r')
             self.config = json.load(config_file)
             config_file.close()
         except IOError:
@@ -85,7 +100,7 @@ class SerialCommander(QtGui.QMainWindow):
         # Load telecommands list
         try:
             tc_set = set()  # Avoid duplicated items
-            tc_file = open(config_path + "cmd_list.txt", 'r')
+            tc_file = open(os.path.join(config_path,"cmd_list.txt"), 'r')
 
             for line in tc_file:
                 line = line.replace(',', ', ')
@@ -104,17 +119,23 @@ class SerialCommander(QtGui.QMainWindow):
 
         self.commands_list = self.config.get("commands", [])
 
+        # Set mongo DB
+        db_server = self.config.get("db_server", "localhost")
+        db_port = self.config.get("db_port", 27017)
+        self.mongo_client = MongoClient(db_server, db_port)
+
         # Set GUI
         self.window = Ui_MainWindow()
         self.window.setupUi(self)
+        self.window.tabWidget.setCurrentIndex(0)
         self.setup_comm()
         self.setup_send()
         self.setup_actions()
         self.setup_telecommands()
+        self.setup_telemetry()
 
         # Set Telemetries to be stored
         self.telemetries = OrderedDict()
-        self.window.tableWidgetTelemetry.setColumnHidden(8, True)  # Hide _id
         self.update_telemetry_array()
 
     def setup_comm(self):
@@ -157,13 +178,17 @@ class SerialCommander(QtGui.QMainWindow):
         """
         self.window.actionGuardar.triggered.connect(self.save_log)
         self.window.actionAgregar_comando.triggered.connect(self.add_cmd)
-        # self.client.new_message.connect(self.write_terminal)
+        self.window.actionAcerca_de.triggered.connect(self.about)
+
+    def about(self):
+        msg = "Version {}".format(self.version)
+        QtGui.QMessageBox.information(self, "About", msg, QtGui.QMessageBox.Ok)
+        return
 
     def setup_telecommands(self):
         """
         Configures telecommands tab
         """
-
         # Fill telecommand list
         cmd_list = self.config.get("tc_list")
         if cmd_list:
@@ -180,6 +205,14 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.pushButton_tlimport.clicked.connect(self.tl_import)
         self.window.pushButton_tcdelete.clicked.connect(self.tc_delete)
         self.window.comboBox_tchistory.activated.connect(self.tc_load_hist)
+
+    def setup_telemetry(self):
+        db_server = self.config.get("db_server", "127.0.0.1")
+        db_port = self.config.get("db_port", 27017)
+        self.window.lineEdit_dbserver.setText(db_server)
+        self.window.lineEdit_dbport.setText(str(db_port))
+        self.window.tableWidgetTelemetry.setColumnHidden(8, True)  # Hide _id
+        self.window.pushButton_dbconnect.clicked.connect(self.tl_reconnect_db)
 
     def tc_filter(self, text):
         """
@@ -208,6 +241,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.tableWidget_tcframe.setItem(rows, 0, item_name)
         self.window.tableWidget_tcframe.setItem(rows, 1, item_cmd)
         self.window.tableWidget_tcframe.setItem(rows, 2, item_par)
+        self.window.tableWidget_tcframe.resizeColumnToContents(0)
 
     def tc_clearframe(self, item):
         """
@@ -269,7 +303,8 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.comboBox_tchistory.addItem(ts)
 
     def tc_load_hist(self, item):
-        """        Load selected frame from history to table
+        """
+        Load selected frame from history to table
         """
         ts = self.window.comboBox_tchistory.currentText()
         frame = self.tc_history[ts]
@@ -298,6 +333,7 @@ class SerialCommander(QtGui.QMainWindow):
         """
         dialog = EditCommandDialog(self,self.commands_list)
         self.commands_list = dialog.run_tool()
+        self.config["commands"] = self.commands_list
 
         self.window.listWidgetCommand.clear()
         self.window.listWidgetCommand.addItems(self.commands_list)
@@ -471,7 +507,6 @@ class SerialCommander(QtGui.QMainWindow):
         cursor = collection.find()
         for document in cursor:
             tel = self.document_to_telemetry(document)
-            tel.get_obj_id()
             self.telemetries[tel.get_obj_id()] = tel
 
     def document_to_telemetry(self, doc):
@@ -509,13 +544,48 @@ class SerialCommander(QtGui.QMainWindow):
         # Re-enable sorting after table was edited
         self.window.tableWidgetTelemetry.setSortingEnabled(True)
         self.window.tableWidgetTelemetry.resizeColumnToContents(0)
-        self.window.tableWidgetTelemetry.show()
         if sort:
             self.window.tableWidgetTelemetry.sortByColumn(0, Qt.AscendingOrder)
 
     def visualize(self, item):
         obj_id = self.window.tableWidgetTelemetry.item(item.row(), 8)  # ID
         self.window.textEditTelemetry.setPlainText(self.telemetries[obj_id.text()].to_string())
+
+    def tl_reconnect_db(self):
+        """
+        Slot to reconnect to a different mongoDB. IP:PORT are read from GUI.
+        :return: None
+        """
+        from pymongo.errors import ConnectionFailure
+
+        db_server = self.window.lineEdit_dbserver.text()
+        db_port = int(self.window.lineEdit_dbport.text())
+        new_client = MongoClient(db_server, db_port)
+
+        # Test connection
+        try:
+            self.window.statusbar.showMessage("Connecting to database...")
+            app.setOverrideCursor(Qt.WaitCursor)
+            new_client.admin.command('ismaster')
+        except ConnectionFailure:
+            print("Server not available")
+            # Show a confirmation message
+            err_msg = "Unable to connect to database {}:{}".format(db_server, db_port)
+            app.restoreOverrideCursor()
+            self.window.statusbar.showMessage(err_msg, 2000)
+            QtGui.QMessageBox.critical(self, "Error", err_msg, QtGui.QMessageBox.Ok)
+            return
+
+        # If everything is Ok, close old connection and replace dB
+        self.config["db_server"] = db_server
+        self.config["db_port"] = db_port
+        self.window.statusbar.showMessage("Connected {}:{}!".format(db_server, db_port), 5000)
+        self.mongo_client.close()
+        self.mongo_client = new_client
+        # Re-load telemetry table
+        self.telemetries.clear()
+        self.update_telemetry_array()
+        app.restoreOverrideCursor()
 
     def tl_save(self):
         for tel in self.telemetries.values():
@@ -552,6 +622,30 @@ class SerialCommander(QtGui.QMainWindow):
         name = QtGui.QFileDialog.getOpenFileName(self, 'Open File')
         if name:
             self.tl_parse_log(name)
+
+    def tl_parse_log(self, log_path):
+        file = open(log_path)
+
+        for line in file:
+            if re.match(r'(.*)Prueba(.*?).*', line):
+                # print("Start Test")
+                continue
+
+            elif re.match(r'(.*)exe_cmd(.*?).*', line):
+                print(line)
+
+            elif len(line) != 0 and re.search(r'\[tm\].*', line) != None:
+                print(line)
+                data = re.sub(r'\[.*\]\[tm\] ', '' , line).split(',')
+                # print(data)
+                if len(data) > 1:
+                    # data[0] = data[0][5:]
+                    if data[-1] == '\n':
+                        del data[-1]
+                    print(data)
+                    self._process_tm(','.join(data))
+
+        file.close()
 
     def command_clicked(self, item):
         """
@@ -658,12 +752,15 @@ class SerialCommander(QtGui.QMainWindow):
         """
         Does a clean exit. Close ports, stop threads and save command list.
         """
+        # Close connections
         if self.alive:
             self.close_connection()
-        # file_cmd = open(self.commands_file, 'w')
-        # for line in self.commands_list:
-        #     file_cmd.write(line+'\n')
-        # file_cmd.close()
+        self.mongo_client.close()
+        # Save config
+        config_filename = os.path.join(local_config_path, "config.json")
+        with open(config_filename, "w") as config_file:
+            json.dump(self.config, config_file, indent=4)
+        # Close application
         event.accept()
 
     def keyPressEvent(self, event):
@@ -684,31 +781,18 @@ class SerialCommander(QtGui.QMainWindow):
         if event.key() == QtCore.Qt.Key_T:
            self.tl_parse_log(sys.argv[1])
 
+        # Events to change current tab
+        if event.key() == QtCore.Qt.Key_1:
+            if event.modifiers() & Qt.ControlModifier:
+                self.window.tabWidget.setCurrentIndex(0)
+        if event.key() == QtCore.Qt.Key_2:
+            if event.modifiers() & Qt.ControlModifier:
+                self.window.tabWidget.setCurrentIndex(1)
+        if event.key() == QtCore.Qt.Key_3:
+            if event.modifiers() & Qt.ControlModifier:
+                self.window.tabWidget.setCurrentIndex(2)
+
         event.accept()
-
-    def tl_parse_log(self, log_path):
-        file = open(log_path)
-
-        for line in file:
-            if re.match(r'(.*)Prueba(.*?).*', line):
-                # print("Start Test")
-                continue
-
-            elif re.match(r'(.*)exe_cmd(.*?).*', line):
-                print(line)
-
-            elif len(line) != 0 and re.search(r'\[tm\].*', line) != None:
-                print(line)
-                data = re.sub(r'\[.*\]\[tm\] ', '' , line).split(',')
-                # print(data)
-                if len(data) > 1:
-                    # data[0] = data[0][5:]
-                    if data[-1] == '\n':
-                        del data[-1]
-                    print(data)
-                    self._process_tm(','.join(data))
-
-        file.close()
 
 
 class EditCommandDialog(QtGui.QDialog):

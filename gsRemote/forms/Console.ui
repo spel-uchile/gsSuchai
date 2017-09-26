@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>571</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -247,6 +247,9 @@
           <property name="text">
            <string>Time stamp</string>
           </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>
@@ -295,13 +298,6 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="4">
-         <widget class="QComboBox" name="comboBox_tchistory">
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="0">
          <widget class="QListWidget" name="listWidget_cmd">
           <property name="sizePolicy">
@@ -317,11 +313,14 @@
           <property name="dragEnabled">
            <bool>true</bool>
           </property>
+          <property name="dragDropOverwriteMode">
+           <bool>false</bool>
+          </property>
           <property name="dragDropMode">
-           <enum>QAbstractItemView::InternalMove</enum>
+           <enum>QAbstractItemView::NoDragDrop</enum>
           </property>
           <property name="defaultDropAction">
-           <enum>Qt::MoveAction</enum>
+           <enum>Qt::IgnoreAction</enum>
           </property>
           <property name="alternatingRowColors">
            <bool>true</bool>
@@ -334,6 +333,9 @@
           </property>
           <attribute name="horizontalHeaderCascadingSectionResizes">
            <bool>false</bool>
+          </attribute>
+          <attribute name="horizontalHeaderDefaultSectionSize">
+           <number>150</number>
           </attribute>
           <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
            <bool>true</bool>
@@ -376,6 +378,19 @@
          <widget class="QPushButton" name="pushButton_tcdelete">
           <property name="text">
            <string>Delete</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3" colspan="3">
+         <widget class="QComboBox" name="comboBox_tchistory">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="editable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -469,6 +484,83 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
+           <widget class="QLabel" name="label_dbserver">
+            <property name="text">
+             <string>DB Server:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_dbserver">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>150</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="inputMask">
+             <string>000.000.000.000</string>
+            </property>
+            <property name="text">
+             <string>127.0.0.1</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_dbport">
+            <property name="text">
+             <string>Port:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_dbport">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>27017</string>
+            </property>
+            <property name="maxLength">
+             <number>5</number>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_dbconnect">
+            <property name="text">
+             <string>Reconnect</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -515,7 +607,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>640</width>
+     <width>800</width>
      <height>30</height>
     </rect>
    </property>
@@ -636,12 +728,12 @@
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>604</x>
-     <y>441</y>
+     <x>710</x>
+     <y>527</y>
     </hint>
     <hint type="destinationlabel">
-     <x>568</x>
-     <y>365</y>
+     <x>103</x>
+     <y>407</y>
     </hint>
    </hints>
   </connection>
@@ -652,12 +744,60 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>391</x>
-     <y>323</y>
+     <x>51</x>
+     <y>368</y>
     </hint>
     <hint type="destinationlabel">
-     <x>630</x>
-     <y>326</y>
+     <x>710</x>
+     <y>367</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineEdit_dbserver</sender>
+   <signal>returnPressed()</signal>
+   <receiver>pushButton_dbconnect</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>195</x>
+     <y>544</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>366</x>
+     <y>543</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineEdit_dbport</sender>
+   <signal>returnPressed()</signal>
+   <receiver>pushButton_dbconnect</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>279</x>
+     <y>543</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>372</x>
+     <y>543</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineEditURL</sender>
+   <signal>returnPressed()</signal>
+   <receiver>pushButtonOpenPort</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>180</x>
+     <y>222</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>67</x>
+     <y>334</y>
     </hint>
    </hints>
   </connection>

@@ -6,6 +6,7 @@ setup.py
 telemetry.py
 config/cmd_list.txt
 config/config.json
+config/version.txt
 forms/Console.py
 forms/EditCommandDialog.py
 forms/MainWindow.py
