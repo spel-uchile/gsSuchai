@@ -78,7 +78,6 @@ class SerialCommander(QtGui.QMainWindow):
         self.tc_history = {}
         self.tc_history_cnt = 0
         self.timestamp = False
-        self.put_timestamp = True
 
         # Load version
         self.version = "0.0.0"
@@ -159,6 +158,8 @@ class SerialCommander(QtGui.QMainWindow):
         available_ports_recv = self.config.get("ports_recv", ["", ])
         available_ports_recv.reverse()
         self.window.comboBoxPortRecv.addItems(available_ports_recv)
+
+        self.timestamp = self.window.checkBoxTimestamp.isChecked()
 
     def setup_send(self):
         """
