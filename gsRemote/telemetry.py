@@ -197,7 +197,6 @@ class Telemetry(object):
                 }
 
     def to_dataframe(self):
-
         if self.payload == self.dictPayload["gyro"]:
             step = 5  # One sample every 5 values
             maxl = (len(self.data) // step) * step  # Fix invalid len
@@ -217,7 +216,7 @@ class Telemetry(object):
             data.rename(columns={'time1': 'time'}, inplace=True)
             self._dataframe = data
 
-        if self.payload == self.dictPayload["lagmuirProbe"]:
+        elif self.payload == self.dictPayload["lagmuirProbe"]:
             """
             Langmuir will send 12 bytes, current message format:
                 43 43 43 05 (3Bytes header + 1Byte ID Plasma)
@@ -245,9 +244,22 @@ class Telemetry(object):
             self._dataframe = data
 
         elif self.payload == self.dictPayload["sensTemp"]:
-            step = 6  # One sample every 5 values
-            maxl = (len(self.data) // step) * step  # Fix invalid len
-            data = np.array(self.data[0:maxl])
+            """
+            Temperatures:
+                              [alive1][alive2][alive3][alive4]
+                [time1][time2][temp 1][temp 2][temp 3][temp 4]
+                
+            Note that first 4 samples indicate if the sensors are working
+            properly but don't have timestamp. We need to remove then or
+            add some padding to match the format of other samples.
+            """
+            # Add 2 samples as padding
+            data = self.data.copy()
+            data.insert(0, "0x0000")
+            data.insert(0, "0x0000")
+            step = 6  # One sample every 6 values
+            maxl = (len(data) // step) * step  # Fix invalid len
+            data = np.array(data[0:maxl])
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "Temp1", "Temp2", "Temp3", "Temp4"]
@@ -255,7 +267,7 @@ class Telemetry(object):
                 for i in data.columns[2:]:
                     data[i] = data[i].apply(lambda x: int(x, 16))
                 data[["Temp1", "Temp2", "Temp3", "Temp4"]] = data[["Temp1", "Temp2", "Temp3", "Temp4"]].astype("int16")
-                data[["Temp1", "Temp2", "Temp3", "Temp4"]] *= 0.0625  # To C
+                data.loc[1:, ["Temp1", "Temp2", "Temp3", "Temp4"]] *= 0.0625  # To C
             except Exception as e:
                 print(e)
 
