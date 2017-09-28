@@ -217,6 +217,33 @@ class Telemetry(object):
             data.rename(columns={'time1': 'time'}, inplace=True)
             self._dataframe = data
 
+        if self.payload == self.dictPayload["lagmuirProbe"]:
+            """
+            Langmuir will send 12 bytes, current message format:
+                43 43 43 05 (3Bytes header + 1Byte ID Plasma)
+                XX XX 		(2 byte Sweep Voltage: 4V)
+                YY YY 		(2 byte Plasma Voltage)
+                TT TT 		(2 byte Temperature ºK)
+                ZZ ZZ 		(2 byte Particle Counter)
+            """
+            step = 14  # One sample every 12 values
+            maxl = (len(self.data) // step) * step  # Fix invalid len
+            data = np.array(self.data[0:maxl])
+            data = data.reshape((-1, step))
+            data = pd.DataFrame(data)
+            data.columns = ["time1", "time2", "S1", "S2", "S3", "ID", "V1", "V2", "P1", "P2", "T1", "T2", "G1", "G2"]
+            try:
+                data["time"] = data.apply(lambda row: self.decode_time(row[0], row[1]), axis=1)
+                data["header"] = data[["S1", "S2", "S3", "ID"]].apply(lambda x: "0x"+"".join(x).replace("0x00", ""), axis=1)
+                data["Sweep voltage"] = data[["V1", "V2"]].apply(lambda x: "0x"+"".join(x).replace("0x00", ""), axis=1)
+                data["Plasma voltage"] = data[["P1", "P2"]].apply(lambda x: "0x"+"".join(x).replace("0x00", ""), axis=1)
+                data["Plasma temperature"] = data[["T1", "T2"]].apply(lambda x: "0x"+"".join(x).replace("0x00", ""), axis=1)
+                data["Particles counter"] = data[["G1", "G2"]].apply(lambda x: "0x"+"".join(x).replace("0x00", ""), axis=1)
+                data.drop(["time1", "time2", "S1", "S2", "S3", "ID", "V1", "V2", "P1", "P2", "T1", "T2", "G1", "G2"], 1, inplace=True)
+            except Exception as e:
+                print(e)
+            self._dataframe = data
+
         elif self.payload == self.dictPayload["sensTemp"]:
             step = 6  # One sample every 5 values
             maxl = (len(self.data) // step) * step  # Fix invalid len
@@ -233,7 +260,7 @@ class Telemetry(object):
                 print(e)
 
             data['time1'] = data.apply(lambda row: self.decode_time(row[0], row[1]), axis=1)
-            data.drop('time2',1, inplace=True)
+            data.drop('time2', 1, inplace=True)
             data.rename(columns={'time1': 'time'}, inplace=True)
             self._dataframe = data
 
@@ -244,7 +271,7 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data.transpose())
             try:
-                data.loc[0,:] = data.apply(lambda col: self.decode_time(col[0], col[1]), axis=0)
+                data.loc[0, :] = data.apply(lambda col: self.decode_time(col[0], col[1]), axis=0)
                 data.insert(0, "Fields", self.statusList)
                 data.drop(1, axis=0, inplace=True)
             except Exception as e:
