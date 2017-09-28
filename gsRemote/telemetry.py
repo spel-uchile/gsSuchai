@@ -239,6 +239,12 @@ class Telemetry(object):
                 data["Plasma temperature"] = data[["T1", "T2"]].apply(lambda x: "0x"+"".join(x).replace("0x00", ""), axis=1)
                 data["Particles counter"] = data[["G1", "G2"]].apply(lambda x: "0x"+"".join(x).replace("0x00", ""), axis=1)
                 data.drop(["time1", "time2", "S1", "S2", "S3", "ID", "V1", "V2", "P1", "P2", "T1", "T2", "G1", "G2"], 1, inplace=True)
+
+                # Parse to int
+                valid = data["header"] == "0x43434305"
+                for i in data.columns[2:]:
+                    data.loc[valid, i] = data.loc[valid, i].apply(lambda x: int(x, 16))
+
             except Exception as e:
                 print(e)
             self._dataframe = data
