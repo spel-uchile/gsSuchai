@@ -51,7 +51,7 @@ class Telemetry(object):
     }
 
     # payloadList = list(dictPayload.keys())
-    
+
     def __init__(self, date=None):
         self.obj_id = None
         self.date = date
@@ -205,6 +205,13 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "X", "Y", "Z"]
+            try:
+                for i in data.columns[2:]:
+                    data[i] = data[i].apply(lambda x: int(x, 16))
+                data[["X", "Y", "Z"]] = data[["X", "Y", "Z"]].astype("int16")
+            except Exception as e:
+                print(e)
+
             data['time1'] = data.apply(lambda row: self.decode_time(row[0], row[1]), axis=1)
             data.drop('time2',1, inplace=True)
             data.rename(columns={'time1': 'time'}, inplace=True)
@@ -217,6 +224,14 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "Temp1", "Temp2", "Temp3", "Temp4"]
+            try:
+                for i in data.columns[2:]:
+                    data[i] = data[i].apply(lambda x: int(x, 16))
+                data[["Temp1", "Temp2", "Temp3", "Temp4"]] = data[["Temp1", "Temp2", "Temp3", "Temp4"]].astype("int16")
+                data[["Temp1", "Temp2", "Temp3", "Temp4"]] *= 0.0625  # To C
+            except Exception as e:
+                print(e)
+
             data['time1'] = data.apply(lambda row: self.decode_time(row[0], row[1]), axis=1)
             data.drop('time2',1, inplace=True)
             data.rename(columns={'time1': 'time'}, inplace=True)
@@ -278,7 +293,19 @@ class Telemetry(object):
             data = "".join(data).splitlines()  # Split in a list of lines
             self._dataframe = pd.DataFrame(data)  # Dataframe of strings
 
+        elif self.payload == self.dictPayload["camera"]:
+            """
+            Camera is saved as bytes array file, then read and saved to a Image
+            object
+            """
+            data = ["{}{}".format(val[2:4], val[4:6]) for val in self.data]
+            data = bytes().fromhex(" ".join(data))
+            self._dataframe = data
+
         elif self.payload == self.dictPayload["expFis"]:
+            """
+            Parsed as ints
+            """
             data = pd.DataFrame(self.data)
             try:
                 data[0] = data[0].apply(lambda x: int(x, 16))
@@ -297,10 +324,19 @@ class Telemetry(object):
         if self._dataframe is None:
             self.to_dataframe()
 
-        self._dataframe.to_csv(fname, index=False)
+        if self.payload == self.dictPayload["camera"]:
+            from io import BytesIO
+            from PIL import Image
+            imgfile = BytesIO(self._dataframe)
+            Image.open(imgfile).save(fname)
+        else:
+            self._dataframe.to_csv(fname, index=False)
 
     def to_string(self):
-        return self.to_dataframe().to_string()
+        try:
+            return self.to_dataframe().to_string()
+        except AttributeError:
+            return str(self._dataframe)
 
     def save(self, client):
         if len(client.nodes) > 0:
