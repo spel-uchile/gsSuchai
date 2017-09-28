@@ -1,6 +1,7 @@
 import pymongo
 import numpy as np
 import pandas as pd
+import datetime
 from bson.objectid import ObjectId
 
 
@@ -69,6 +70,32 @@ class Telemetry(object):
         #    2 -> finished
         #    3 -> broken
         self.state = 0
+
+    def append_hex(self, a, b):
+        sizeof_b = 0
+        # get size of b in bits
+        while ((b >> sizeof_b) > 0):
+            sizeof_b += 1
+        # align answer to nearest 4 bits (hex digit)
+        sizeof_b += sizeof_b % 4
+        return (a << sizeof_b) | b
+
+
+    def decode_time(self, time1, time2):
+
+        date_time = int('0x' + time2[2:6]+time1[2:6], 16)
+        year = (date_time&0b11111100000000000000000000000000)>>26
+        month = (date_time&0b00000011110000000000000000000000)>>22
+        day = (date_time&0b00000000001111100000000000000000)>>17
+        hour = (date_time&0b00000000000000011111000000000000)>>12
+        min =  (date_time&0b00000000000000000000111111000000)>>6
+        sec = (date_time&0b00000000000000000000000000111111)>>0
+
+        try:
+            return datetime.datetime(year=year+2000, month=month, day=day, hour=hour, minute=min, second=sec)
+        except ValueError:
+            return '0x' + time2[2:6]+time1[2:6]
+
 
     def get_state(self):
         return self.state
@@ -169,7 +196,7 @@ class Telemetry(object):
                 "date": self.date
                 }
 
-    def to_datafarme(self):
+    def to_dataframe(self):
 
         if self.payload == self.dictPayload["gyro"]:
             step = 5  # One sample every 5 values
@@ -178,6 +205,9 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "X", "Y", "Z"]
+            data['time1'] = data.apply(lambda row: self.decode_time(row[0], row[1]), axis=1)
+            data.drop('time2',1, inplace=True)
+            data.rename(columns={'time1': 'time'}, inplace=True)
             self._dataframe = data
 
         elif self.payload == self.dictPayload["sensTemp"]:
@@ -187,6 +217,9 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "Temp1", "Temp2", "Temp3", "Temp4"]
+            data['time1'] = data.apply(lambda row: self.decode_time(row[0], row[1]), axis=1)
+            data.drop('time2',1, inplace=True)
+            data.rename(columns={'time1': 'time'}, inplace=True)
             self._dataframe = data
 
         elif self.payload == self.dictPayload["tm_estado"]:
@@ -195,7 +228,13 @@ class Telemetry(object):
             data = np.array(self.data[0:maxl])
             data = data.reshape((-1, step))
             data = pd.DataFrame(data.transpose())
-            data.insert(0, "Fields", self.statusList)
+            try:
+                data.loc[0,:] = data.apply(lambda col: self.decode_time(col[0], col[1]), axis=0)
+                data.insert(0, "Fields", self.statusList)
+                data.drop(1, axis=0, inplace=True)
+            except Exception as e:
+                print(e)
+
             try:
                 for i in data.columns[1:]:
                     data[i] = data[i].apply(lambda x: int(x, 16))
@@ -214,6 +253,7 @@ class Telemetry(object):
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "Voltage", "I in", "I out", "Temp 1", "Temp 2"]
+
             try:
                 for i in data.columns[2:]:
                     data[i] = data[i].apply(lambda x: int(x, 16))
@@ -221,6 +261,10 @@ class Telemetry(object):
                 pass
             except Exception as e:
                 print(e)
+
+            data['time1'] = data.apply(lambda row: self.decode_time(row[0], row[1]), axis=1)
+            data.drop('time2',1, inplace=True)
+            data.rename(columns={'time1': 'time'}, inplace=True)
 
             self._dataframe = data
 
@@ -251,12 +295,12 @@ class Telemetry(object):
 
     def to_csv(self, fname):
         if self._dataframe is None:
-            self.to_datafarme()
+            self.to_dataframe()
 
         self._dataframe.to_csv(fname, index=False)
 
     def to_string(self):
-        return self.to_datafarme().to_string()
+        return self.to_dataframe().to_string()
 
     def save(self, client):
         if len(client.nodes) > 0:
