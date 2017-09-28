@@ -622,7 +622,9 @@ class SerialCommander(QtGui.QMainWindow):
     def tl_import(self):
         name = QtGui.QFileDialog.getOpenFileName(self, 'Open File')
         if name:
+            app.setOverrideCursor(Qt.BusyCursor)
             self.tl_parse_log(name)
+            app.restoreOverrideCursor()
 
     def tl_parse_log(self, log_path):
         file = open(log_path)
