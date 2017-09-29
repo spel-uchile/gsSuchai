@@ -224,10 +224,55 @@ class Telemetry(object):
                 YY YY 		(2 byte Plasma Voltage)
                 TT TT 		(2 byte Temperature ºK)
                 ZZ ZZ 		(2 byte Particle Counter)
+                
+            Payload format is:
+            [Header][CAL1][Header][CAL2][Header][CAL3][Header][CAL4]
+            [Header][TIME][Header][Plasma] ... [TIME][Header][Plasma]
+            ...
+            [Header][CAL1][Header][CAL2][Header][CAL3][Header][CAL4][STOP][END]
             """
             step = 14  # One sample every 12 values
-            maxl = (len(self.data) // step) * step  # Fix invalid len
-            data = np.array(self.data[0:maxl])
+            data = self.data.copy()
+
+            # Add some extra values between CAL packets to match the format of
+            # plasma samples that are [date][sample]
+            data.insert(14, data[1]); data.insert(14, data[0])
+            data.insert(28, data[1]); data.insert(28, data[0])
+            data.insert(42, data[1]); data.insert(42, data[0])
+
+            def fix_missing(_data):
+                """
+                Fix some missing packets inside langmuir data. The standard
+                format is [date+time][header+data]. If the lanmguir lost some
+                data packets, this result in [date+time][date+time][header+data]
+                samples inside the whole data frame. We need to remove the
+                [date+time] of lost packets to match the general data format.
+                :param _data: reference data frame
+                :return: None. Modifies _data
+                """
+                # First is in i=2
+                _i = 2
+                _next = 14
+                _start = "0x0043"
+                while _i < len(_data):
+                    if _data[_i] == _start:
+                        # Data is Ok, look next packet
+                        _i += _next
+                    else:
+                        # Oops not header found... go back and retry
+                        del _data[_i-1]
+                        del _data[_i-1]
+
+            # Add some extra values between ending CAL packets to match the
+            # format of plasma samples that are [date][sample]
+            last_value = data.index("0xFFFE", len(data)//2) - 50
+            data.insert(last_value+14, data[last_value+1]); data.insert(last_value+14, data[last_value+0])
+            data.insert(last_value+28, data[last_value+1]); data.insert(last_value+28, data[last_value+0])
+            data.insert(last_value+42, data[last_value+1]); data.insert(last_value+42, data[last_value+0])
+
+            fix_missing(data)
+            maxl = (len(data) // step) * step  # Fix invalid len
+            data = np.array(data[0:maxl])
             data = data.reshape((-1, step))
             data = pd.DataFrame(data)
             data.columns = ["time1", "time2", "S1", "S2", "S3", "ID", "V1", "V2", "P1", "P2", "T1", "T2", "G1", "G2"]
@@ -241,7 +286,7 @@ class Telemetry(object):
                 data.drop(["time1", "time2", "S1", "S2", "S3", "ID", "V1", "V2", "P1", "P2", "T1", "T2", "G1", "G2"], 1, inplace=True)
 
                 # Parse to int
-                valid = data["header"] == "0x43434305"
+                valid = (data["header"] == "0x43434301") | (data["header"] == "0x43434302") | (data["header"] == "0x43434303") | (data["header"] == "0x43434304") | (data["header"] == "0x43434305")
                 for i in data.columns[2:]:
                     data.loc[valid, i] = data.loc[valid, i].apply(lambda x: int(x, 16))
 
