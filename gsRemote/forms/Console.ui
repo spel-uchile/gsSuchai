@@ -143,6 +143,9 @@
                <property name="text">
                 <string>Abrir</string>
                </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
              <item row="2" column="1">
@@ -208,7 +211,8 @@
           </property>
           <property name="icon">
            <iconset theme="edit-clear">
-            <normaloff>.</normaloff>.</iconset>
+            <normaloff/>
+           </iconset>
           </property>
          </widget>
         </item>
@@ -222,7 +226,8 @@
           </property>
           <property name="icon">
            <iconset theme="go-next">
-            <normaloff>.</normaloff>.</iconset>
+            <normaloff/>
+           </iconset>
           </property>
           <property name="autoDefault">
            <bool>true</bool>
@@ -505,7 +510,7 @@
              </size>
             </property>
             <property name="inputMask">
-             <string>000.000.000.000</string>
+             <string>000.000.000.000; </string>
             </property>
             <property name="text">
              <string>127.0.0.1</string>
@@ -608,7 +613,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>30</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuArchivo">
@@ -639,7 +644,8 @@
   <action name="actionGuardar">
    <property name="icon">
     <iconset theme="document-save">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Guardar</string>
@@ -651,7 +657,8 @@
   <action name="actionSalir">
    <property name="icon">
     <iconset theme="application-exit">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Salir</string>
@@ -663,7 +670,8 @@
   <action name="actionAgregar_comando">
    <property name="icon">
     <iconset theme="list-add">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Agregar comando</string>
@@ -675,7 +683,8 @@
   <action name="actionAcerca_de">
    <property name="icon">
     <iconset theme="help-about">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Acerca de</string>
@@ -728,8 +737,8 @@
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>710</x>
-     <y>527</y>
+     <x>783</x>
+     <y>563</y>
     </hint>
     <hint type="destinationlabel">
      <x>103</x>
@@ -760,12 +769,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>195</x>
-     <y>544</y>
+     <x>187</x>
+     <y>561</y>
     </hint>
     <hint type="destinationlabel">
-     <x>366</x>
-     <y>543</y>
+     <x>413</x>
+     <y>561</y>
     </hint>
    </hints>
   </connection>
@@ -776,12 +785,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>279</x>
-     <y>543</y>
+     <x>323</x>
+     <y>561</y>
     </hint>
     <hint type="destinationlabel">
-     <x>372</x>
-     <y>543</y>
+     <x>413</x>
+     <y>561</y>
     </hint>
    </hints>
   </connection>
@@ -796,8 +805,24 @@
      <y>222</y>
     </hint>
     <hint type="destinationlabel">
-     <x>67</x>
-     <y>334</y>
+     <x>86</x>
+     <y>333</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonClosePort</sender>
+   <signal>clicked()</signal>
+   <receiver>pushButtonOpenPort</receiver>
+   <slot>toggle()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>208</x>
+     <y>317</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>81</x>
+     <y>317</y>
     </hint>
    </hints>
   </connection>

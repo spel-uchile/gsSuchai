@@ -684,6 +684,7 @@ class SerialCommander(QtGui.QMainWindow):
         self.window.pushButtonOpenPort.setEnabled(True)
         self.window.pushButtonSend.setEnabled(False)
         self.alive = False
+        self.client.close()
         self.client = None
 
     def send_msg(self):
