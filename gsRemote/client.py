@@ -94,7 +94,12 @@ class Client(QObject):
             # Get the publisher's message
             socks = dict(poller.poll(500))
             if receiver_socket in socks and socks[receiver_socket] == zmq.POLLIN:
-                message = receiver_socket.recv_string()
+                message = receiver_socket.recv()
+                try:
+                    message = message.decode("utf-8")
+                except UnicodeDecodeError:
+                    # Fix receiving invalids messages from GNU radio ZMQ sink
+                    message = message[3:].decode("utf-8")
                 self.new_message.emit(message)
 
         receiver_socket.close(1)

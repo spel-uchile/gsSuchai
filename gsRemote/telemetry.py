@@ -222,7 +222,7 @@ class Telemetry(object):
                 43 43 43 05 (3Bytes header + 1Byte ID Plasma)
                 XX XX 		(2 byte Sweep Voltage: 4V)
                 YY YY 		(2 byte Plasma Voltage)
-                TT TT 		(2 byte Temperature ºK)
+                TT TT 		(2 byte Temperature K)
                 ZZ ZZ 		(2 byte Particle Counter)
                 
             Payload format is:
