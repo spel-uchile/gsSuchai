@@ -12,13 +12,15 @@ setup(
     license='GPL v3',
     author='Carlos Gonzalez',
     author_email='carlgonz@uchile.cl',
-    description='Ground segment software to control SUCHAI satellite',
+    description='Ground segment software to control the SUCHAI satellite',
+    
+    dependencies = [
 
     packages=['forms'],
     py_modules=['groundstation', "client", "telemetry"],
     scripts=['groundstation.py', ],
     include_package_data=True,
-    install_requires=["pyzmq", "pymongo"],
+    install_requires=["numpy", "pandas", "pyzmq", "pymongo"],
     data_files=[('share/groundstation/', ['config/config.json']),
                 ('share/groundstation/', ['config/version.txt']),
                 ('share/groundstation/', ['config/cmd_list.txt']),
