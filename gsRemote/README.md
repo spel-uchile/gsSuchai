@@ -6,10 +6,11 @@ Se conecta a través de ZMQ con el TNC físico o con GNURadio (https://github.co
 ## Instalación
 
 1. Instalar dependencias
-    - Python (Python 3.X o 2.7.X)
-    - pytohn-pip
-    - python-pyqt4
-    - python-sip
+    - python2 / python3 (Python 3.X o 2.7.X)
+    - python-pip / python3-pip
+    - python-pyqt4 / python3-pyqt4
+    - python-sip / python3-sip
+    - pyqt4-dev-tools
     
 2. Ejecutar make
 
