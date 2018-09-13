@@ -13,9 +13,6 @@ setup(
     author='Carlos Gonzalez',
     author_email='carlgonz@uchile.cl',
     description='Ground segment software to control the SUCHAI satellite',
-    
-    dependencies = [
-
     packages=['forms'],
     py_modules=['groundstation', "client", "telemetry"],
     scripts=['groundstation.py', ],
